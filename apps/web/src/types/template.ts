@@ -68,8 +68,24 @@ export interface PlanDraftItem {
  * a reference back to the source template so the UI can show provenance.
  */
 export interface PlanDraft {
+  /**
+   * Id of the existing plan this draft edits. Present when a saved plan is
+   * opened along the edit path (so saving updates it in place); absent for a
+   * brand-new draft (instantiated from a template or duplicated), so saving
+   * creates a new plan rather than overwriting the source.
+   */
+  id?: string;
   /** Id of the template this draft was instantiated from, if any. */
   templateId?: string;
+  /**
+   * Name of the source template, kept for display provenance in the builder.
+   */
+  templateName?: string;
   name: string;
+  /**
+   * Patient this plan is assigned to. Cleared on duplicate so items can be
+   * reused for a different patient without accidental cross-patient reuse.
+   */
+  patientName?: string;
   items: PlanDraftItem[];
 }
