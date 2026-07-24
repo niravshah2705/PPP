@@ -1,0 +1,34 @@
+.template-item {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 0 0 12px;
+}
+
+.template-item__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.template-item__field {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  gap: 4px;
+}
+
+.template-item__field input[aria-invalid='true'] {
+  border-color: #dc2626;
+  outline-color: #dc2626;
+}
+
+.template-item__error {
+  color: #dc2626;
+  font-size: 11px;
+}
+
+.template-item__remove {
+  margin-left: auto;
+}

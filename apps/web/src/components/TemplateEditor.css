@@ -1,0 +1,45 @@
+.template-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 720px;
+}
+
+.template-editor__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.template-editor__error {
+  color: #dc2626;
+  font-size: 12px;
+}
+
+.template-editor__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.template-editor__tag {
+  background: #eef2ff;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.template-editor__tag-add {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.template-editor__items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

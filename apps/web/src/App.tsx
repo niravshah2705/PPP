@@ -3,6 +3,7 @@ import { EmbedExercise } from './routes/EmbedExercise';
 import { ExercisePlayer } from './routes/ExercisePlayer';
 import { DoctorPreviewPage } from './routes/DoctorPreviewPage';
 import { DoctorSessionReviewPage } from './routes/DoctorSessionReviewPage';
+import { TemplatesPage } from './routes/TemplatesPage';
 
 export function App() {
   return (
@@ -15,6 +16,8 @@ export function App() {
       <Route path="/doctor/preview/:id" element={<DoctorPreviewPage />} />
       {/* Doctor session-review dashboard for a plan. */}
       <Route path="/doctor/sessions/:planId" element={<DoctorSessionReviewPage />} />
+      {/* Template management: create/edit custom templates and instantiate them. */}
+      <Route path="/doctor/templates" element={<TemplatesPage />} />
       <Route path="*" element={<Navigate to="/embed/exercise/demo" replace />} />
     </Routes>
   );
