@@ -1,0 +1,57 @@
+.plans-page {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+  font: 14px/1.4 system-ui, sans-serif;
+  color: #0f172a;
+}
+
+.plans-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.plans-page__title {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.plans-page__header button {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  cursor: pointer;
+}
+
+.plans-page__search {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.plans-page__search-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.plans-page__search input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  font: inherit;
+}
+
+.plans-page__loading,
+.plans-page__empty,
+.plans-page__builder-context {
+  color: #475569;
+}

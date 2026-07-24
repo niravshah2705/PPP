@@ -4,6 +4,7 @@ import { ExercisePlayer } from './routes/ExercisePlayer';
 import { DoctorPreviewPage } from './routes/DoctorPreviewPage';
 import { DoctorSessionReviewPage } from './routes/DoctorSessionReviewPage';
 import { TemplatesPage } from './routes/TemplatesPage';
+import { PlansPage } from './routes/PlansPage';
 
 export function App() {
   return (
@@ -18,6 +19,8 @@ export function App() {
       <Route path="/doctor/sessions/:planId" element={<DoctorSessionReviewPage />} />
       {/* Template management: create/edit custom templates and instantiate them. */}
       <Route path="/doctor/templates" element={<TemplatesPage />} />
+      {/* Plan management: list/search all plans; open, copy link, or duplicate. */}
+      <Route path="/doctor/plans" element={<PlansPage />} />
       <Route path="*" element={<Navigate to="/embed/exercise/demo" replace />} />
     </Routes>
   );
