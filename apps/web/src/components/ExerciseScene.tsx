@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react';
 import type { Exercise } from '../types/exercise';
 import { createDemoScene, type DemoSceneHandle } from '../scene/demoScene';
+import { useWebXRSupport } from '../hooks/useWebXRSupport';
 import './ExerciseScene.css';
 
 export interface ExerciseSceneProps {
   exercise: Exercise;
   /**
-   * When true, render ONLY the looping 3D demo — no player controls, no
-   * tracking overlay, no session chrome. Used by the embeddable route.
+   * When true, render ONLY the looping 3D demo — no header, no Enter-VR button,
+   * no session chrome. Used by the embeddable route.
    */
   demoOnly?: boolean;
 }
@@ -15,12 +16,19 @@ export interface ExerciseSceneProps {
 /**
  * Single source of truth for the exercise's 3D visuals.
  *
- * The same canvas/demo drives both the full player (with chrome) and the
- * tracking-free embed (`demoOnly`). The underlying WebGL scene autoplays,
- * loops, and releases its GPU resources when the component unmounts.
+ * The same canvas/demo drives both the full player and the tracking-free embed
+ * (`demoOnly`). The underlying WebGL scene autoplays, loops, and releases its
+ * GPU resources when the component unmounts.
+ *
+ * The inline 3D demo ALWAYS renders — it is the 2D-screen fallback used when the
+ * device can't enter immersive VR. The Enter-VR button is shown only when the
+ * browser reports WebXR support, so a WebXR-unsupported device sees the inline
+ * demo with no dead Enter-VR affordance.
  */
 export function ExerciseScene({ exercise, demoOnly = false }: ExerciseSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // The embed never offers immersive VR, so skip the probe there.
+  const webXR = useWebXRSupport(!demoOnly);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -58,19 +66,20 @@ export function ExerciseScene({ exercise, demoOnly = false }: ExerciseSceneProps
       />
 
       {!demoOnly && (
-        <div className="exercise-scene__chrome" data-testid="player-chrome">
+        <div className="exercise-scene__chrome" data-testid="scene-chrome">
           <header className="exercise-scene__header">
             <h2>{exercise.name}</h2>
             {exercise.description && <p>{exercise.description}</p>}
           </header>
-          <div className="exercise-scene__tracking" data-testid="tracking-overlay">
-            <span className="exercise-scene__tracking-dot" /> Tracking active
-          </div>
-          <footer className="exercise-scene__controls" data-testid="player-controls">
-            <button type="button">Play</button>
-            <button type="button">Pause</button>
-            <button type="button">End session</button>
-          </footer>
+          {webXR === 'supported' && (
+            <button
+              type="button"
+              className="exercise-scene__enter-vr"
+              data-testid="enter-vr-button"
+            >
+              Enter VR
+            </button>
+          )}
         </div>
       )}
     </div>

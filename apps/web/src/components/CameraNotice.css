@@ -1,0 +1,37 @@
+.camera-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 0.5rem;
+  background: #fffbeb;
+  border: 1px solid #f59e0b;
+  color: #78350f;
+  font-size: 0.9rem;
+}
+
+.camera-notice[data-status='lost'] {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1e3a8a;
+}
+
+.camera-notice__icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.camera-notice__message {
+  margin: 0;
+  flex: 1;
+}
+
+.camera-notice__retry {
+  flex: none;
+  padding: 0.3rem 0.7rem;
+  border-radius: 0.4rem;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}

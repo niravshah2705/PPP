@@ -1,0 +1,48 @@
+.session-player {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+.session-player__chrome {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+}
+
+.session-player__tracking {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+}
+
+.session-player__tracking-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: #22c55e;
+}
+
+.session-player__reps {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.session-player__controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.session-player__manual-rep {
+  padding: 0.35rem 0.9rem;
+  border-radius: 0.4rem;
+  border: 1px solid #4f46e5;
+  background: #4f46e5;
+  color: #fff;
+  cursor: pointer;
+}
