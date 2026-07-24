@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PlanLoadError, fetchPlans } from '../../src/api/plans';
+import {
+  PlanLoadError,
+  PlanNotFoundError,
+  PlanValidationError,
+  fetchPlan,
+  fetchPlans,
+  savePlan,
+} from '../../src/api/plans';
+import type { PlanDraft } from '../../src/types/template';
 
 function mockFetch(impl: (url: string) => Response | Promise<Response>) {
   const fn = vi.fn((url: string) => Promise.resolve(impl(url)));
@@ -57,5 +65,79 @@ describe('fetchPlans', () => {
       vi.fn(() => Promise.reject(new Error('offline'))),
     );
     await expect(fetchPlans()).rejects.toBeInstanceOf(PlanLoadError);
+  });
+});
+
+const validDraft: PlanDraft = {
+  templateId: 't1',
+  templateName: 'Knee rehab',
+  name: 'Knee rehab',
+  patientName: 'Ada Lovelace',
+  items: [{ exerciseId: 'a', sets: 3, reps: 10, hold: 0, rest: 30 }],
+};
+
+describe('savePlan', () => {
+  it('POSTs a new draft to /api/plans and returns the persisted plan', async () => {
+    const created = { ...onePlan[0], patientName: 'Ada Lovelace' };
+    const fn = mockFetch(() => new Response(JSON.stringify(created), { status: 201 }));
+
+    const plan = await savePlan(validDraft);
+
+    expect(fn).toHaveBeenCalledWith('/api/plans', expect.objectContaining({ method: 'POST' }));
+    const call = fn.mock.calls[0] as unknown as [string, RequestInit];
+    const body = JSON.parse(call[1].body as string);
+    expect(body.patientName).toBe('Ada Lovelace');
+    expect(plan.id).toBe('p1');
+  });
+
+  it('PUTs to /api/plans/:id when the draft carries an id', async () => {
+    const fn = mockFetch(() => new Response(JSON.stringify(onePlan[0]), { status: 200 }));
+    await savePlan({ ...validDraft, id: 'p1' });
+    expect(fn).toHaveBeenCalledWith('/api/plans/p1', expect.objectContaining({ method: 'PUT' }));
+  });
+
+  it('throws PlanValidationError locally without sending an invalid draft', async () => {
+    const fn = mockFetch(() => new Response('{}', { status: 201 }));
+    await expect(savePlan({ ...validDraft, patientName: '   ' })).rejects.toBeInstanceOf(
+      PlanValidationError,
+    );
+    expect(fn).not.toHaveBeenCalled();
+  });
+
+  it('surfaces server field errors on HTTP 422', async () => {
+    mockFetch(
+      () =>
+        new Response(JSON.stringify({ errors: [{ field: 'items[0].reps', message: 'nope' }] }), {
+          status: 422,
+        }),
+    );
+    await expect(savePlan(validDraft)).rejects.toMatchObject({
+      name: 'PlanValidationError',
+      fieldErrors: { 'items[0].reps': 'nope' },
+    });
+  });
+
+  it('throws PlanLoadError on other non-2xx', async () => {
+    mockFetch(() => new Response('boom', { status: 500 }));
+    await expect(savePlan(validDraft)).rejects.toBeInstanceOf(PlanLoadError);
+  });
+});
+
+describe('fetchPlan (share endpoint)', () => {
+  it('GETs /api/plans/:id and returns the plan', async () => {
+    const fn = mockFetch(() => new Response(JSON.stringify(onePlan[0]), { status: 200 }));
+    const plan = await fetchPlan('p1');
+    expect(fn).toHaveBeenCalledWith('/api/plans/p1', expect.anything());
+    expect(plan.patientName).toBe('Ada Lovelace');
+  });
+
+  it('throws PlanNotFoundError on HTTP 404', async () => {
+    mockFetch(() => new Response('nope', { status: 404 }));
+    await expect(fetchPlan('missing')).rejects.toBeInstanceOf(PlanNotFoundError);
+  });
+
+  it('throws PlanLoadError on other non-2xx', async () => {
+    mockFetch(() => new Response('boom', { status: 500 }));
+    await expect(fetchPlan('p1')).rejects.toBeInstanceOf(PlanLoadError);
   });
 });
