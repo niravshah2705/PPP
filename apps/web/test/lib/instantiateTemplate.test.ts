@@ -21,6 +21,34 @@ describe('instantiateDraftFromTemplate', () => {
     expect(draft.items).toEqual(template.items);
   });
 
+  it('records the source template id (both provenance fields) and its name', () => {
+    const draft = instantiateDraftFromTemplate(template);
+    expect(draft.sourceTemplateId).toBe('tmpl-1');
+    // Kept in sync with templateId so save/share resolve unchanged.
+    expect(draft.templateId).toBe('tmpl-1');
+    expect(draft.templateName).toBe('Knee rehab');
+  });
+
+  it('preserves the template item order (array position)', () => {
+    const draft = instantiateDraftFromTemplate(template);
+    expect(draft.items.map((i) => i.exerciseId)).toEqual(['knee-1', 'knee-2']);
+  });
+
+  it('binds the draft to the current patient when supplied', () => {
+    const draft = instantiateDraftFromTemplate(template, { patientName: 'Ada Lovelace' });
+    expect(draft.patientName).toBe('Ada Lovelace');
+  });
+
+  it('treats a blank/whitespace patient as unbound (undefined)', () => {
+    expect(instantiateDraftFromTemplate(template).patientName).toBeUndefined();
+    expect(instantiateDraftFromTemplate(template, { patientName: '   ' }).patientName).toBeUndefined();
+  });
+
+  it('trims the bound patient name', () => {
+    const draft = instantiateDraftFromTemplate(template, { patientName: '  Grace Hopper  ' });
+    expect(draft.patientName).toBe('Grace Hopper');
+  });
+
   it('applies a name override', () => {
     const draft = instantiateDraftFromTemplate(template, { name: 'Ada — knee plan' });
     expect(draft.name).toBe('Ada — knee plan');

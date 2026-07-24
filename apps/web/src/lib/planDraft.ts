@@ -3,6 +3,22 @@ import type { PlanDraft, PlanDraftItem } from '../types/template';
 import { ITEM_BOUNDS, validateTemplateItem, type FieldError } from './templateValidation';
 
 /**
+ * Merge a newly-instantiated template draft into the doctor's existing unsaved
+ * draft rather than discarding it. The existing draft's identity and provenance
+ * (`name`, `sourceTemplateId`/`templateId`, `templateName`, `patientName`, and
+ * any `id`) are preserved, and the incoming template's items are appended after
+ * the current ones. The combined items are re-keyed to a gap-free 0..n-1 order
+ * (see {@link normalizePlanOrder}) so every merged item remains an editable row
+ * keyed by order. Pure: neither input is mutated.
+ */
+export function mergePlanDrafts(base: PlanDraft, incoming: PlanDraft): PlanDraft {
+  return {
+    ...base,
+    items: normalizePlanOrder([...base.items, ...incoming.items]),
+  };
+}
+
+/**
  * Compute the next order value for a draft. Explicit item `order` values win;
  * items without one fall back to their array position so a draft instantiated
  * from a template (whose items carry no order) still yields a sensible next
