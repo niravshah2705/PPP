@@ -22,6 +22,40 @@ The doctor template preview embeds this route via an iframe — see
 [`DoctorExercisePreview`](src/components/DoctorExercisePreview.tsx) — instead of
 re-implementing the scene.
 
+## Graceful degradation: camera & WebXR (NIR-783)
+
+The demo runs on varied devices, so a denied camera or a browser without WebXR
+must never dead-end the patient. The full session player at **`/exercise/:id`**
+degrades gracefully instead of failing:
+
+- Capability detection lives in [`deviceCapabilities`](src/lib/deviceCapabilities.ts):
+  `requestCamera()` classifies `getUserMedia` into `granted` / `denied` /
+  `no-camera` / `unsupported` / `error`, and `detectWebXRSupport()` reports
+  whether `navigator.xr` can start an `immersive-vr` session.
+- Tracking-wiring [`useExerciseTracking`](src/hooks/useExerciseTracking.ts)
+  probes the camera on mount and watches the live track for loss (`ended` /
+  `mute`). Any unavailable/lost camera drops the player into **manual** mode —
+  recorded reps are preserved across the transition.
+- [`SessionPlayer`](src/components/SessionPlayer.tsx) composes the scene with the
+  tracking-wiring: it shows a "Tracking active" overlay when the camera is live,
+  or a clear [`CameraNotice`](src/components/CameraNotice.tsx) plus a manual
+  "Count rep" control otherwise, so the session always progresses.
+- WebXR gating is owned by [`ExerciseScene`](src/components/ExerciseScene.tsx):
+  the inline 3D demo always renders (the 2D-screen fallback), and the Enter-VR
+  button appears **only** when WebXR is supported.
+
+Behaviour matrix:
+
+| Condition | Player behaviour |
+| --- | --- |
+| Camera denied / no camera | Clear notice + manual rep counting; session continues |
+| WebXR unsupported | Inline 3D demo renders; **no** Enter-VR button |
+| Camera revoked mid-session | Tracking pauses, manual completion offered, recorded reps kept |
+
+Component tests mock `getUserMedia` and `navigator.xr` to verify each path — see
+`test/lib/deviceCapabilities.test.ts`, `test/hooks/useExerciseTracking.test.ts`,
+`test/components/SessionPlayer.test.tsx`, and `test/components/ExerciseScene.test.tsx`.
+
 ## Scripts
 
 ```bash
