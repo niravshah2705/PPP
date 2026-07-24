@@ -2,18 +2,17 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PatientPlanPlayer } from '../../src/components/PatientPlanPlayer';
-import type { Plan } from '../../src/types/plan';
+import type { SharedPlan } from '../../src/types/sharedPlan';
 import type { Session } from '../../src/types/session';
 import type { RecorderTransport } from '../../src/lib/sessionRecorder';
 import type { TrackedExerciseResult } from '../../src/lib/sessionSequencer';
 
-const plan: Plan = {
+const plan: SharedPlan = {
   id: 'plan-1',
   patientName: 'Jamie',
-  updatedAt: '2024-01-01T00:00:00.000Z',
   items: [
-    { exerciseId: 'a', sets: 1, reps: 2, hold: 0, rest: 0 },
-    { exerciseId: 'b', sets: 1, reps: 2, hold: 0, rest: 0 },
+    { exerciseId: 'a', sets: 1, reps: 2, hold: 0, rest: 0, exercise: { id: 'a', name: 'Exercise A' } },
+    { exerciseId: 'b', sets: 1, reps: 2, hold: 0, rest: 0, exercise: { id: 'b', name: 'Exercise B' } },
   ],
 };
 

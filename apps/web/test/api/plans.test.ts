@@ -6,6 +6,7 @@ import {
   PlanValidationError,
   fetchPlan,
   fetchPlans,
+  fetchSharedPlan,
   savePlan,
 } from '../../src/api/plans';
 import type { PlanDraft } from '../../src/types/template';
@@ -160,5 +161,61 @@ describe('fetchPlan (share endpoint)', () => {
   it('throws PlanLoadError on other non-2xx', async () => {
     mockFetch(() => new Response('boom', { status: 500 }));
     await expect(fetchPlan('p1')).rejects.toBeInstanceOf(PlanLoadError);
+  });
+});
+
+const sharedPlan = {
+  id: 'p1',
+  patientName: 'Ada Lovelace',
+  items: [
+    {
+      exerciseId: 'ex-1',
+      sets: 3,
+      reps: 10,
+      hold: 0,
+      rest: 30,
+      order: 0,
+      exercise: { id: 'ex-1', name: 'Exercise One', demoMediaRef: 'media/ex-1.mp4' },
+    },
+  ],
+};
+
+describe('fetchSharedPlan (GET /api/plans/:id/share)', () => {
+  it('GETs /api/plans/:id/share and returns the patient-facing payload', async () => {
+    const fn = mockFetch(() => new Response(JSON.stringify(sharedPlan), { status: 200 }));
+    const plan = await fetchSharedPlan('p1');
+    expect(fn).toHaveBeenCalledWith('/api/plans/p1/share', expect.anything());
+    expect(plan.patientName).toBe('Ada Lovelace');
+    expect(plan.items[0].exercise.name).toBe('Exercise One');
+  });
+
+  it('encodes the id in the path', async () => {
+    const fn = mockFetch(() => new Response(JSON.stringify(sharedPlan), { status: 200 }));
+    await fetchSharedPlan('a b/c');
+    expect(fn).toHaveBeenCalledWith('/api/plans/a%20b%2Fc/share', expect.anything());
+  });
+
+  it('throws PlanNotFoundError on HTTP 404', async () => {
+    mockFetch(() => new Response(JSON.stringify({ error: { code: 'plan_not_found' } }), { status: 404 }));
+    await expect(fetchSharedPlan('missing')).rejects.toBeInstanceOf(PlanNotFoundError);
+  });
+
+  it('throws PlanLoadError on other non-2xx', async () => {
+    mockFetch(() => new Response('boom', { status: 500 }));
+    await expect(fetchSharedPlan('p1')).rejects.toBeInstanceOf(PlanLoadError);
+  });
+
+  it('throws PlanLoadError on a malformed payload (item missing expanded exercise)', async () => {
+    const bad = { id: 'p1', patientName: 'Ada', items: [{ exerciseId: 'ex-1', sets: 1, reps: 1, hold: 0, rest: 0 }] };
+    mockFetch(() => new Response(JSON.stringify(bad), { status: 200 }));
+    await expect(fetchSharedPlan('p1')).rejects.toBeInstanceOf(PlanLoadError);
+  });
+
+  it('wraps network errors as PlanLoadError', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new Error('offline'))),
+    );
+    await expect(fetchSharedPlan('p1')).rejects.toBeInstanceOf(PlanLoadError);
   });
 });

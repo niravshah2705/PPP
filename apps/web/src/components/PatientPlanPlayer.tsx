@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Plan } from '../types/plan';
+import type { SharedPlan } from '../types/sharedPlan';
 import type { Session } from '../types/session';
 import { createSession, fetchSessions, type CreateSessionInput } from '../api/sessions';
 import type { RecorderTransport } from '../lib/sessionRecorder';
@@ -15,8 +15,8 @@ import './PatientPlanPlayer.css';
 type Phase = 'checking' | 'prompt' | 'idle' | 'active';
 
 export interface PatientPlanPlayerProps {
-  /** The loaded plan the patient is working through (from `/patient?planId=`). */
-  plan: Plan;
+  /** The loaded patient-facing plan payload (from `/patient?planId=`). */
+  plan: SharedPlan;
   /** Look up the plan's existing sessions (defaults to the real GET). Injectable for tests. */
   loadSessions?: (planId: string) => Promise<Session[]>;
   /** Open a new session (defaults to the real POST). Injectable for tests. */
