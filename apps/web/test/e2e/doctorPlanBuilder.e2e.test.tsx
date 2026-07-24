@@ -218,12 +218,18 @@ describe('doctor plan-builder flow (E2E, real API on a temporary store)', () => 
     const user = userEvent.setup();
     await openBuilderFromTemplate(user);
 
-    // Leave the patient blank and try to save a valid template draft.
+    // With no patient assigned the save/assign action is disabled and an inline
+    // hint explains why — so a valid-but-unassigned draft can never be saved.
+    expect(screen.getByTestId('plan-draft-save')).toBeDisabled();
+    expect(screen.getByTestId('plan-draft-patient-hint')).toHaveTextContent(/assign a patient/i);
     await user.click(screen.getByTestId('plan-draft-save'));
-
-    expect(await screen.findByTestId('plan-draft-patient-error')).toHaveTextContent('Assign a patient');
     expect(store.posted).toHaveLength(0);
     expect(store.plans).toHaveLength(0);
     expect(screen.queryByTestId('plan-draft-saved')).not.toBeInTheDocument();
+
+    // Assigning a patient clears the hint and enables the save.
+    await user.type(screen.getByTestId('plan-draft-patient'), 'Ada Lovelace');
+    expect(screen.queryByTestId('plan-draft-patient-hint')).not.toBeInTheDocument();
+    expect(screen.getByTestId('plan-draft-save')).toBeEnabled();
   });
 });

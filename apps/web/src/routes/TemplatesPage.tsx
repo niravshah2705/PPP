@@ -5,6 +5,7 @@ import { mergePlanDrafts } from '../lib/planDraft';
 import { TemplateEditor } from '../components/TemplateEditor';
 import { TemplateGallery } from '../components/TemplateGallery';
 import { PlanDraftEditor } from '../components/PlanDraftEditor';
+import { usePatientContextOptional } from '../context/PatientContext';
 
 type Mode = { kind: 'gallery' } | { kind: 'create' } | { kind: 'edit'; template: Template };
 
@@ -22,10 +23,14 @@ type Mode = { kind: 'gallery' } | { kind: 'create' } | { kind: 'edit'; template:
  * protect.
  */
 export function TemplatesPage() {
+  const patientCtx = usePatientContextOptional();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [mode, setMode] = useState<Mode>({ kind: 'gallery' });
-  const [currentPatient, setCurrentPatient] = useState('');
+  // The header owns the patient in the integrated app; fall back to a local
+  // field only when this page is used without the shared context (e.g. tests).
+  const [localPatient, setLocalPatient] = useState('');
+  const currentPatient = patientCtx ? patientCtx.patient : localPatient;
   const [draft, setDraft] = useState<PlanDraft | undefined>();
   // Incoming draft awaiting a replace/merge/cancel decision when one is already
   // in progress and unsaved.
@@ -120,17 +125,25 @@ export function TemplatesPage() {
           )}
           {status === 'ready' && (
             <>
-              <label className="templates-page__patient">
-                <span>Building plan for</span>
-                <input
-                  type="text"
-                  data-testid="templates-current-patient"
-                  aria-label="Current patient"
-                  placeholder="Patient name"
-                  value={currentPatient}
-                  onChange={(event) => setCurrentPatient(event.target.value)}
-                />
-              </label>
+              {patientCtx ? (
+                <p className="templates-page__patient" data-testid="templates-current-patient-readout">
+                  {currentPatient
+                    ? `Building plan for ${currentPatient}`
+                    : 'Choose a patient in the header to build for.'}
+                </p>
+              ) : (
+                <label className="templates-page__patient">
+                  <span>Building plan for</span>
+                  <input
+                    type="text"
+                    data-testid="templates-current-patient"
+                    aria-label="Current patient"
+                    placeholder="Patient name"
+                    value={localPatient}
+                    onChange={(event) => setLocalPatient(event.target.value)}
+                  />
+                </label>
+              )}
               <TemplateGallery
                 templates={templates}
                 currentPatientName={currentPatient}

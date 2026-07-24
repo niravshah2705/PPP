@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Exercise } from '../types/exercise';
 import type { Plan } from '../types/plan';
 import type { PlanDraft, PlanDraftItem, TemplateItem } from '../types/template';
 import { savePlan, PlanValidationError } from '../api/plans';
+import { usePatientContextOptional } from '../context/PatientContext';
 import {
   appendExerciseToItems,
   estimatePlanDurationSeconds,
@@ -43,8 +44,9 @@ export interface PlanDraftEditorProps {
  * draft intact and offers a retry.
  */
 export function PlanDraftEditor({ draft, knownExerciseIds, onSaved }: PlanDraftEditorProps) {
+  const patientCtx = usePatientContextOptional();
   const [items, setItems] = useState<PlanDraftItem[]>(() => draft.items.map((i) => ({ ...i })));
-  const [patientName, setPatientName] = useState(draft.patientName ?? '');
+  const [localPatientName, setLocalPatientName] = useState(draft.patientName ?? '');
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
@@ -52,14 +54,32 @@ export function PlanDraftEditor({ draft, knownExerciseIds, onSaved }: PlanDraftE
   const [savedPlan, setSavedPlan] = useState<Plan | undefined>();
   const [copied, setCopied] = useState(false);
 
+  // The patient comes from the shared header context when it's mounted (the real
+  // app), falling back to a local field when this editor is used standalone.
+  const usingContext = patientCtx !== null;
+  const patientName = usingContext ? patientCtx!.patientName : localPatientName;
+  const patientTrimmed = patientName.trim();
+  const hasPatient = patientTrimmed.length > 0;
+
+  // Let the header selector guard against silently swapping the patient while
+  // this draft is unsaved (see PatientContextSelector). Cleared once saved and
+  // when the editor unmounts. Depends on the stable setter (not the memoized
+  // context object) so raising the flag doesn't feed back into a re-render loop.
+  const setDraftDirty = patientCtx?.setDraftDirty;
+  useEffect(() => {
+    if (!setDraftDirty) return;
+    setDraftDirty(!savedPlan);
+    return () => setDraftDirty(false);
+  }, [setDraftDirty, savedPlan]);
+
   const existingIds = useMemo(
     () => new Set(items.map((item) => item.exerciseId)),
     [items],
   );
 
   const draftToSave = useMemo<PlanDraft>(
-    () => ({ ...draft, patientName: patientName.trim() || undefined, items }),
-    [draft, patientName, items],
+    () => ({ ...draft, patientName: patientTrimmed || undefined, items }),
+    [draft, patientTrimmed, items],
   );
 
   // Live estimated total duration; recomputed on every edit so the summary
@@ -151,22 +171,34 @@ export function PlanDraftEditor({ draft, knownExerciseIds, onSaved }: PlanDraftE
         </p>
       </header>
 
-      <label className="plan-draft-editor__field">
-        <span>Patient</span>
-        <input
-          type="text"
-          value={patientName}
-          aria-invalid={patientError ? true : undefined}
-          aria-label="Patient name"
-          data-testid="plan-draft-patient"
-          onChange={(event) => setPatientName(event.target.value)}
-        />
-        {patientError && (
-          <span className="plan-draft-editor__error" role="alert" data-testid="plan-draft-patient-error">
-            {patientError}
-          </span>
-        )}
-      </label>
+      {usingContext ? (
+        <p className="plan-draft-editor__patient-readout" data-testid="plan-draft-patient-readout">
+          {hasPatient ? (
+            <>
+              Building plan for <strong>{patientTrimmed}</strong>
+            </>
+          ) : (
+            'No patient selected.'
+          )}
+        </p>
+      ) : (
+        <label className="plan-draft-editor__field">
+          <span>Patient</span>
+          <input
+            type="text"
+            value={patientName}
+            aria-invalid={patientError ? true : undefined}
+            aria-label="Patient name"
+            data-testid="plan-draft-patient"
+            onChange={(event) => setLocalPatientName(event.target.value)}
+          />
+          {patientError && (
+            <span className="plan-draft-editor__error" role="alert" data-testid="plan-draft-patient-error">
+              {patientError}
+            </span>
+          )}
+        </label>
+      )}
 
       <div className="plan-draft-editor__items">
         {fieldErrors.items && (
@@ -236,11 +268,19 @@ export function PlanDraftEditor({ draft, knownExerciseIds, onSaved }: PlanDraftE
         </div>
       )}
 
+      {!hasPatient && (
+        <p className="plan-draft-editor__hint" role="note" data-testid="plan-draft-patient-hint">
+          {usingContext
+            ? 'Set a patient in the header to save or assign this plan.'
+            : 'Assign a patient to save or assign this plan.'}
+        </p>
+      )}
+
       <button
         type="button"
         className="plan-draft-editor__save"
         data-testid="plan-draft-save"
-        disabled={saving || isEmpty}
+        disabled={saving || isEmpty || !hasPatient}
         onClick={handleSave}
       >
         {saving ? 'Saving…' : 'Save plan'}

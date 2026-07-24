@@ -5,6 +5,7 @@ import {
   type FieldError,
 } from '../lib/templateValidation';
 import { validatePlanForSave } from '../lib/planDraft';
+import { distinctPatientNames } from '../lib/patientSuggestions';
 
 /** Thrown for transport/server errors while loading plans. */
 export class PlanLoadError extends Error {
@@ -190,4 +191,43 @@ export async function fetchPlan(id: string, signal?: AbortSignal): Promise<Plan>
   }
 
   return assertPlan(await response.json());
+}
+
+/**
+ * Fetch the distinct patient names already used on plans, to back the patient
+ * selector's typeahead. Sourced from `GET /api/plans?patientName=<query>`: the
+ * server narrows by the (prefix/substring) query and this collapses the
+ * returned plans to distinct, trimmed names (see {@link distinctPatientNames}).
+ * An empty query lists every previously-used patient so focusing the field
+ * surfaces the full history.
+ *
+ * Suggestions are a best-effort convenience, never a blocker: a malformed
+ * (non-array) payload yields an empty list rather than an error. A non-2xx
+ * response or transport failure raises {@link PlanLoadError} so the caller can
+ * decide (the selector hook simply falls back to no suggestions).
+ */
+export async function fetchPatientNameSuggestions(
+  query = '',
+  signal?: AbortSignal,
+): Promise<string[]> {
+  const params = new URLSearchParams({ patientName: query.trim() });
+  let response: Response;
+  try {
+    response = await fetch(`/api/plans?${params.toString()}`, {
+      headers: { Accept: 'application/json' },
+      signal,
+    });
+  } catch (err) {
+    throw new PlanLoadError(
+      err instanceof Error ? err.message : 'Network error while loading patient suggestions',
+    );
+  }
+
+  if (!response.ok) {
+    throw new PlanLoadError(`Failed to load patient suggestions (HTTP ${response.status})`);
+  }
+
+  const data = (await response.json()) as unknown;
+  if (!Array.isArray(data)) return [];
+  return distinctPatientNames(data as Plan[]);
 }

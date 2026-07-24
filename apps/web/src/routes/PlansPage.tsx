@@ -9,6 +9,7 @@ import {
   planToEditDraft,
 } from '../lib/planList';
 import { patientPlanShareUrl } from '../lib/planLink';
+import { usePatientContextOptional } from '../context/PatientContext';
 import type { Plan } from '../types/plan';
 import type { PlanDraft } from '../types/template';
 import './PlansPage.css';
@@ -27,6 +28,7 @@ type Mode =
  * patient cleared for reassignment.
  */
 export function PlansPage() {
+  const patientCtx = usePatientContextOptional();
   const { status, plans, error } = usePlans();
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<Mode>({ kind: 'list' });
@@ -34,11 +36,18 @@ export function PlansPage() {
 
   const visible = useMemo(() => filterPlansByQuery(plans, query), [plans, query]);
 
-  const handleOpen = (plan: Plan) =>
+  const handleOpen = (plan: Plan) => {
+    // Editing a plan makes it the working patient so the header reflects it and
+    // the save targets the same patient.
+    patientCtx?.setPatientName(plan.patientName);
     setMode({ kind: 'builder', draft: planToEditDraft(plan), editing: true });
+  };
 
-  const handleDuplicate = (plan: Plan) =>
+  const handleDuplicate = (plan: Plan) => {
+    // A duplicate starts unassigned: clear the working patient for reassignment.
+    patientCtx?.setPatientName('');
     setMode({ kind: 'builder', draft: duplicatePlanToDraft(plan), editing: false });
+  };
 
   const handleCopyLink = async (plan: Plan) => {
     const url = patientPlanShareUrl(plan.id);
