@@ -1,0 +1,536 @@
+[
+  {
+    "id": "squat",
+    "name": "Bodyweight Squat",
+    "description": "Sit the hips back and bend the knees to lower into a squat, then stand tall.",
+    "category": "lower",
+    "accentColor": "#4f46e5",
+    "demoMediaRef": "media/squat.mp4",
+    "thumbnailUrl": "/thumbs/squat.png",
+    "targetJoints": ["hip", "knee"],
+    "defaultSets": 3,
+    "defaultReps": 12,
+    "defaultHoldSeconds": 0,
+    "tracking": {
+      "landmarks": [23, 25, 27],
+      "angleJoint": { "from": 23, "vertex": 25, "to": 27 },
+      "repUpAngle": 170,
+      "repDownAngle": 90
+    }
+  },
+  {
+    "id": "sit-to-stand",
+    "name": "Sit-to-Stand",
+    "description": "Rise from a seated position to standing without using the hands, then sit back down with control.",
+    "category": "lower",
+    "accentColor": "#4f46e5",
+    "demoMediaRef": "media/sit-to-stand.mp4",
+    "thumbnailUrl": "/thumbs/sit-to-stand.png",
+    "targetJoints": ["hip", "knee"],
+    "defaultSets": 3,
+    "defaultReps": 10,
+    "defaultHoldSeconds": 0,
+    "tracking": {
+      "landmarks": [23, 25, 27],
+      "angleJoint": { "from": 23, "vertex": 25, "to": 27 },
+      "repUpAngle": 172,
+      "repDownAngle": 95
+    }
+  },
+  {
+    "id": "shoulder-abduction",
+    "name": "Shoulder Abduction",
+    "description": "Raise the straight arm out to the side up to shoulder height, then lower it back down.",
+    "category": "upper",
+    "accentColor": "#0ea5e9",
+    "demoMediaRef": "media/shoulder-abduction.mp4",
+    "thumbnailUrl": "/thumbs/shoulder-abduction.png",
+    "targetJoints": ["shoulder"],
+    "defaultSets": 3,
+    "defaultReps": 12,
+    "defaultHoldSeconds": 0,
+    "tracking": {
+      "landmarks": [23, 11, 13],
+      "angleJoint": { "from": 23, "vertex": 11, "to": 13 },
+      "repUpAngle": 150,
+      "repDownAngle": 20
+    }
+  },
+  {
+    "id": "knee-extension",
+    "name": "Seated Knee Extension",
+    "description": "Straighten the knee against gentle resistance, then lower with control.",
+    "category": "lower",
+    "accentColor": "#4f46e5",
+    "demoMediaRef": "media/knee-extension.mp4",
+    "thumbnailUrl": "/thumbs/knee-extension.png",
+    "targetJoints": ["knee"],
+    "defaultSets": 3,
+    "defaultReps": 12,
+    "defaultHoldSeconds": 3,
+    "tracking": {
+      "landmarks": [23, 25, 27],
+      "angleJoint": { "from": 23, "vertex": 25, "to": 27 },
+      "repUpAngle": 165,
+      "repDownAngle": 90
+    }
+  },
+  {
+    "id": "arm-raise",
+    "name": "Forward Arm Raise",
+    "description": "Lift the straight arm forward and up toward overhead, then lower it back down.",
+    "category": "upper",
+    "accentColor": "#0ea5e9",
+    "demoMediaRef": "media/arm-raise.mp4",
+    "thumbnailUrl": "/thumbs/arm-raise.png",
+    "targetJoints": ["shoulder"],
+    "defaultSets": 3,
+    "defaultReps": 12,
+    "defaultHoldSeconds": 0,
+    "tracking": {
+      "landmarks": [23, 11, 13],
+      "angleJoint": { "from": 23, "vertex": 11, "to": 13 },
+      "repUpAngle": 160,
+      "repDownAngle": 20
+    }
+  },
+  {
+    "id": "hip-abduction",
+    "name": "Standing Hip Abduction",
+    "description": "Lift the straight leg out to the side, keeping the torso upright, then return.",
+    "category": "lower",
+    "accentColor": "#4f46e5",
+    "demoMediaRef": "media/hip-abduction.mp4",
+    "thumbnailUrl": "/thumbs/hip-abduction.png",
+    "targetJoints": ["hip"],
+    "defaultSets": 3,
+    "defaultReps": 12,
+    "defaultHoldSeconds": 0,
+    "tracking": {
+      "landmarks": [11, 23, 25],
+      "angleJoint": { "from": 11, "vertex": 23, "to": 25 },
+      "repUpAngle": 172,
+      "repDownAngle": 135
+    }
+  },
+  {
+    "id": "heel-raise",
+    "name": "Standing Heel Raise",
+    "description": "Rise onto the balls of the feet, lifting the heels, then lower slowly.",
+    "category": "lower",
+    "accentColor": "#4f46e5",
+    "demoMediaRef": "media/heel-raise.mp4",
+    "thumbnailUrl": "/thumbs/heel-raise.png",
+    "targetJoints": ["ankle"],
+    "defaultSets": 3,
+    "defaultReps": 15,
+    "defaultHoldSeconds": 0,
+    "tracking": {
+      "landmarks": [25, 27, 31],
+      "angleJoint": { "from": 25, "vertex": 27, "to": 31 },
+      "repUpAngle": 130,
+      "repDownAngle": 100
+    }
+  },
+  {
+    "id": "elbow-flexion",
+    "name": "Elbow Flexion (Bicep Curl)",
+    "description": "Bend the elbow to curl the forearm up toward the shoulder, then lower it fully.",
+    "category": "upper",
+    "accentColor": "#0ea5e9",
+    "demoMediaRef": "media/elbow-flexion.mp4",
+    "thumbnailUrl": "/thumbs/elbow-flexion.png",
+    "targetJoints": ["elbow"],
+    "defaultSets": 3,
+    "defaultReps": 12,
+    "defaultHoldSeconds": 0,
+    "tracking": {
+      "landmarks": [11, 13, 15],
+      "angleJoint": { "from": 11, "vertex": 13, "to": 15 },
+      "repUpAngle": 160,
+      "repDownAngle": 40
+    }
+  },
+  {
+    "id": "neck-rotation",
+    "name": "Neck Rotation",
+    "description": "Turn the head slowly to one side to look over the shoulder, then return to centre.",
+    "category": "mobility",
+    "accentColor": "#10b981",
+    "demoMediaRef": "media/neck-rotation.mp4",
+    "thumbnailUrl": "/thumbs/neck-rotation.png",
+    "targetJoints": ["neck"],
+    "defaultSets": 2,
+    "defaultReps": 10,
+    "defaultHoldSeconds": 2,
+    "tracking": {
+      "landmarks": [11, 0, 12],
+      "angleJoint": { "from": 11, "vertex": 0, "to": 12 },
+      "repUpAngle": 95,
+      "repDownAngle": 60
+    }
+  },
+  {
+    "id": "ankle-dorsiflexion",
+    "name": "Ankle Dorsiflexion",
+    "description": "Pull the foot upward toward the shin to flex the ankle, then release.",
+    "category": "mobility",
+    "accentColor": "#10b981",
+    "demoMediaRef": "media/ankle-dorsiflexion.mp4",
+    "thumbnailUrl": "/thumbs/ankle-dorsiflexion.png",
+    "targetJoints": ["ankle"],
+    "defaultSets": 3,
+    "defaultReps": 12,
+    "defaultHoldSeconds": 3,
+    "tracking": {
+      "landmarks": [25, 27, 31],
+      "angleJoint": { "from": 25, "vertex": 27, "to": 31 },
+      "repUpAngle": 110,
+      "repDownAngle": 85,
+      "holdAngle": 100,
+      "holdDirection": "above"
+    }
+  },
+  {
+    "id": "standing-march",
+    "name": "Standing March",
+    "description": "March in place, lifting each knee to a comfortable height, alternating legs.",
+    "category": "mobility",
+    "accentColor": "#10b981",
+    "demoMediaRef": "media/standing-march.mp4",
+    "thumbnailUrl": "/thumbs/standing-march.png",
+    "targetJoints": ["hip", "knee"],
+    "defaultSets": 2,
+    "defaultReps": 20,
+    "defaultHoldSeconds": 0,
+    "tracking": {
+      "landmarks": [11, 23, 25],
+      "angleJoint": { "from": 11, "vertex": 23, "to": 25 },
+      "repUpAngle": 170,
+      "repDownAngle": 110
+    }
+  },
+  {
+    "id": "wall-push-up",
+    "name": "Wall Push-Up",
+    "description": "Standing arm's length from a wall, bend the elbows to lean in, then press back out.",
+    "category": "upper",
+    "accentColor": "#0ea5e9",
+    "demoMediaRef": "media/wall-push-up.mp4",
+    "thumbnailUrl": "/thumbs/wall-push-up.png",
+    "targetJoints": ["elbow", "shoulder"],
+    "defaultSets": 3,
+    "defaultReps": 12,
+    "defaultHoldSeconds": 0,
+    "tracking": {
+      "landmarks": [11, 13, 15],
+      "angleJoint": { "from": 11, "vertex": 13, "to": 15 },
+      "repUpAngle": 165,
+      "repDownAngle": 90
+    }
+  },
+  {
+    "id": "knee-flexion",
+    "name": "Seated Knee Flexion",
+    "description": "Bend the knee, sliding the heel back under the chair, then straighten.",
+    "category": "lower",
+    "accentColor": "#4f46e5",
+    "demoMediaRef": "media/knee-flexion.mp4",
+    "thumbnailUrl": "/thumbs/knee-flexion.png",
+    "targetJoints": ["knee"],
+    "defaultSets": 3,
+    "defaultReps": 12,
+    "defaultHoldSeconds": 0,
+    "tracking": {
+      "landmarks": [23, 25, 27],
+      "angleJoint": { "from": 23, "vertex": 25, "to": 27 },
+      "repUpAngle": 160,
+      "repDownAngle": 70
+    }
+  },
+  {
+    "id": "quad-set",
+    "name": "Quad Set",
+    "description": "Tighten the thigh, pressing the back of the knee down, and hold.",
+    "category": "lower",
+    "accentColor": "#4f46e5",
+    "demoMediaRef": "media/quad-set.mp4",
+    "targetJoints": ["knee"],
+    "defaultSets": 3,
+    "defaultReps": 10,
+    "defaultHoldSeconds": 5,
+    "tracking": {
+      "landmarks": [23, 25, 27],
+      "angleJoint": { "from": 23, "vertex": 25, "to": 27 },
+      "repUpAngle": 172,
+      "repDownAngle": 160,
+      "holdAngle": 170,
+      "holdDirection": "above"
+    }
+  },
+  {
+    "id": "heel-slide",
+    "name": "Heel Slide",
+    "description": "Slide the heel toward the buttock and back, lying down.",
+    "category": "lower",
+    "accentColor": "#4f46e5",
+    "demoMediaRef": "media/heel-slide.mp4",
+    "targetJoints": ["knee"],
+    "defaultSets": 3,
+    "defaultReps": 10,
+    "defaultHoldSeconds": 0,
+    "tracking": {
+      "landmarks": [23, 25, 27],
+      "angleJoint": { "from": 23, "vertex": 25, "to": 27 },
+      "repUpAngle": 165,
+      "repDownAngle": 80
+    }
+  },
+  {
+    "id": "straight-leg-raise",
+    "name": "Straight-Leg Raise",
+    "description": "Lift the straightened leg with the quad engaged, then lower it.",
+    "category": "lower",
+    "accentColor": "#4f46e5",
+    "demoMediaRef": "media/straight-leg-raise.mp4",
+    "targetJoints": ["hip"],
+    "defaultSets": 3,
+    "defaultReps": 8,
+    "defaultHoldSeconds": 3,
+    "tracking": {
+      "landmarks": [11, 23, 25],
+      "angleJoint": { "from": 11, "vertex": 23, "to": 25 },
+      "repUpAngle": 170,
+      "repDownAngle": 130
+    }
+  },
+  {
+    "id": "shoulder-pendulum",
+    "name": "Pendulum Swing",
+    "description": "Let the arm hang and swing gently in small circles.",
+    "category": "upper",
+    "accentColor": "#0ea5e9",
+    "demoMediaRef": "media/shoulder-pendulum.mp4",
+    "thumbnailUrl": "/thumbs/shoulder-pendulum.png",
+    "targetJoints": ["shoulder"],
+    "defaultSets": 2,
+    "defaultReps": 15,
+    "defaultHoldSeconds": 0,
+    "tracking": {
+      "landmarks": [23, 11, 13],
+      "angleJoint": { "from": 23, "vertex": 11, "to": 13 },
+      "repUpAngle": 40,
+      "repDownAngle": 10
+    }
+  },
+  {
+    "id": "shoulder-external-rotation",
+    "name": "External Rotation",
+    "description": "Rotate the forearm outward keeping the elbow tucked.",
+    "category": "upper",
+    "accentColor": "#0ea5e9",
+    "demoMediaRef": "media/shoulder-external-rotation.mp4",
+    "targetJoints": ["shoulder"],
+    "defaultSets": 3,
+    "defaultReps": 12,
+    "defaultHoldSeconds": 0,
+    "tracking": {
+      "landmarks": [23, 11, 13],
+      "angleJoint": { "from": 23, "vertex": 11, "to": 13 },
+      "repUpAngle": 60,
+      "repDownAngle": 10
+    }
+  },
+  {
+    "id": "wall-slide",
+    "name": "Wall Slide",
+    "description": "Slide the forearms up a wall keeping contact.",
+    "category": "upper",
+    "accentColor": "#0ea5e9",
+    "demoMediaRef": "media/wall-slide.mp4",
+    "targetJoints": ["shoulder"],
+    "defaultSets": 3,
+    "defaultReps": 10,
+    "defaultHoldSeconds": 2,
+    "tracking": {
+      "landmarks": [23, 11, 13],
+      "angleJoint": { "from": 23, "vertex": 11, "to": 13 },
+      "repUpAngle": 150,
+      "repDownAngle": 60
+    }
+  },
+  {
+    "id": "scapular-retraction",
+    "name": "Scapular Retraction",
+    "description": "Squeeze the shoulder blades together and hold.",
+    "category": "upper",
+    "accentColor": "#0ea5e9",
+    "demoMediaRef": "media/scapular-retraction.mp4",
+    "targetJoints": ["shoulder"],
+    "defaultSets": 3,
+    "defaultReps": 10,
+    "defaultHoldSeconds": 5,
+    "tracking": {
+      "landmarks": [23, 11, 13],
+      "angleJoint": { "from": 23, "vertex": 11, "to": 13 },
+      "repUpAngle": 35,
+      "repDownAngle": 10,
+      "holdAngle": 30,
+      "holdDirection": "above"
+    }
+  },
+  {
+    "id": "pelvic-tilt",
+    "name": "Pelvic Tilt",
+    "description": "Flatten the lower back by tilting the pelvis.",
+    "category": "core",
+    "accentColor": "#f59e0b",
+    "demoMediaRef": "media/pelvic-tilt.mp4",
+    "targetJoints": ["hip", "spine"],
+    "defaultSets": 2,
+    "defaultReps": 12,
+    "defaultHoldSeconds": 3,
+    "tracking": {
+      "landmarks": [11, 23, 25],
+      "angleJoint": { "from": 11, "vertex": 23, "to": 25 },
+      "repUpAngle": 172,
+      "repDownAngle": 155,
+      "holdAngle": 165,
+      "holdDirection": "below"
+    }
+  },
+  {
+    "id": "bird-dog",
+    "name": "Bird Dog",
+    "description": "Extend the opposite arm and leg from all fours; hold.",
+    "category": "core",
+    "accentColor": "#f59e0b",
+    "demoMediaRef": "media/bird-dog.mp4",
+    "thumbnailUrl": "/thumbs/bird-dog.png",
+    "targetJoints": ["hip", "shoulder", "spine"],
+    "defaultSets": 3,
+    "defaultReps": 8,
+    "defaultHoldSeconds": 5,
+    "tracking": {
+      "landmarks": [11, 23, 25],
+      "angleJoint": { "from": 11, "vertex": 23, "to": 25 },
+      "repUpAngle": 172,
+      "repDownAngle": 150,
+      "holdAngle": 160,
+      "holdDirection": "above"
+    }
+  },
+  {
+    "id": "dead-bug",
+    "name": "Dead Bug",
+    "description": "Lower the opposite arm and leg while bracing the core.",
+    "category": "core",
+    "accentColor": "#f59e0b",
+    "demoMediaRef": "media/dead-bug.mp4",
+    "targetJoints": ["hip", "shoulder", "spine"],
+    "defaultSets": 3,
+    "defaultReps": 10,
+    "defaultHoldSeconds": 0,
+    "tracking": {
+      "landmarks": [11, 23, 25],
+      "angleJoint": { "from": 11, "vertex": 23, "to": 25 },
+      "repUpAngle": 170,
+      "repDownAngle": 120
+    }
+  },
+  {
+    "id": "glute-bridge",
+    "name": "Glute Bridge",
+    "description": "Lift the hips into a bridge and hold.",
+    "category": "core",
+    "accentColor": "#f59e0b",
+    "demoMediaRef": "media/glute-bridge.mp4",
+    "targetJoints": ["hip"],
+    "defaultSets": 3,
+    "defaultReps": 12,
+    "defaultHoldSeconds": 3,
+    "tracking": {
+      "landmarks": [11, 23, 25],
+      "angleJoint": { "from": 11, "vertex": 23, "to": 25 },
+      "repUpAngle": 165,
+      "repDownAngle": 110
+    }
+  },
+  {
+    "id": "single-leg-stance",
+    "name": "Single-Leg Stance",
+    "description": "Balance on one leg with light fingertip support as needed.",
+    "category": "mobility",
+    "accentColor": "#10b981",
+    "demoMediaRef": "media/single-leg-stance.mp4",
+    "thumbnailUrl": "/thumbs/single-leg-stance.png",
+    "targetJoints": ["hip", "knee", "ankle"],
+    "defaultSets": 3,
+    "defaultReps": 3,
+    "defaultHoldSeconds": 20,
+    "tracking": {
+      "landmarks": [23, 25, 27],
+      "angleJoint": { "from": 23, "vertex": 25, "to": 27 },
+      "repUpAngle": 175,
+      "repDownAngle": 160,
+      "holdAngle": 165,
+      "holdDirection": "above"
+    }
+  },
+  {
+    "id": "tandem-stance",
+    "name": "Tandem Stance",
+    "description": "Stand heel-to-toe and hold steady.",
+    "category": "mobility",
+    "accentColor": "#10b981",
+    "demoMediaRef": "media/tandem-stance.mp4",
+    "targetJoints": ["hip", "knee", "ankle"],
+    "defaultSets": 3,
+    "defaultReps": 2,
+    "defaultHoldSeconds": 30,
+    "tracking": {
+      "landmarks": [23, 25, 27],
+      "angleJoint": { "from": 23, "vertex": 25, "to": 27 },
+      "repUpAngle": 175,
+      "repDownAngle": 160,
+      "holdAngle": 165,
+      "holdDirection": "above"
+    }
+  },
+  {
+    "id": "heel-toe-walk",
+    "name": "Heel-to-Toe Walk",
+    "description": "Walk in a straight line placing heel against toe.",
+    "category": "mobility",
+    "accentColor": "#10b981",
+    "demoMediaRef": "media/heel-toe-walk.mp4",
+    "targetJoints": ["hip", "knee", "ankle"],
+    "defaultSets": 2,
+    "defaultReps": 10,
+    "defaultHoldSeconds": 0,
+    "tracking": {
+      "landmarks": [23, 25, 27],
+      "angleJoint": { "from": 23, "vertex": 25, "to": 27 },
+      "repUpAngle": 175,
+      "repDownAngle": 150
+    }
+  },
+  {
+    "id": "marching-in-place",
+    "name": "Marching in Place",
+    "description": "March lifting the knees to a comfortable height.",
+    "category": "mobility",
+    "accentColor": "#10b981",
+    "demoMediaRef": "media/marching-in-place.mp4",
+    "targetJoints": ["hip", "knee"],
+    "defaultSets": 2,
+    "defaultReps": 20,
+    "defaultHoldSeconds": 0,
+    "tracking": {
+      "landmarks": [11, 23, 25],
+      "angleJoint": { "from": 11, "vertex": 23, "to": 25 },
+      "repUpAngle": 170,
+      "repDownAngle": 110
+    }
+  }
+]

@@ -28,6 +28,14 @@ export interface AngleJoint {
  * threshold.
  */
 export interface ExerciseTracking {
+  /**
+   * Pose landmark indices this exercise depends on (MediaPipe Pose 33-point).
+   * Includes the three `angleJoint` points and may list extra landmarks the
+   * tracker needs to keep visible for a reliable measurement. Every catalogued
+   * library exercise ships a non-empty list (enforced by the data-integrity
+   * test); optional on the type only so ad-hoc/legacy configs can omit it.
+   */
+  landmarks?: number[];
   /** Which joint's angle to measure from the landmark stream. */
   angleJoint: AngleJoint;
   /** Angle (deg) marking the fully-extended/"up" end of the movement. */
@@ -56,6 +64,20 @@ export interface ExerciseTracking {
   smoothingWindow?: number;
 }
 
+/**
+ * The coarse body-region buckets the seeded exercise library is grouped by.
+ * Used for the `?category=` filter on `GET /api/exercises` and the picker tags.
+ */
+export type ExerciseCategory = 'upper' | 'lower' | 'core' | 'mobility';
+
+/** All valid {@link ExerciseCategory} values, in display order. */
+export const EXERCISE_CATEGORIES: readonly ExerciseCategory[] = [
+  'upper',
+  'lower',
+  'core',
+  'mobility',
+];
+
 /** A rehabilitation exercise and the metadata needed to render its 3D demo. */
 export interface Exercise {
   id: string;
@@ -67,10 +89,26 @@ export interface Exercise {
   /** Accent colour (hex) used by the demo scene, e.g. "#4f46e5". */
   accentColor?: string;
   /**
-   * Category the exercise belongs to (e.g. "knee", "shoulder"). Used to group
-   * and filter the library in the add-exercise picker and rendered as a tag.
+   * Category the exercise belongs to. Seeded library records use the
+   * {@link ExerciseCategory} vocabulary (upper/lower/core/mobility); the field
+   * stays a broad `string` so ad-hoc entries and the picker can pass any tag.
+   * Used to group and filter the library and rendered as a tag.
    */
   category?: string;
+  /**
+   * Human-readable joints the movement targets (e.g. `["hip", "knee"]`). Drives
+   * grouping and helps the doctor understand what a movement trains.
+   */
+  targetJoints?: string[];
+  /** Default number of sets prescribed when adding this exercise to a plan. */
+  defaultSets?: number;
+  /** Default reps-per-set prescribed when adding this exercise to a plan. */
+  defaultReps?: number;
+  /**
+   * Default per-rep hold (seconds) prescribed for this exercise; `0` for
+   * pure rep-counted movements, `> 0` for holds/isometrics.
+   */
+  defaultHoldSeconds?: number;
   /** URL of a small preview image shown alongside the exercise in the picker. */
   thumbnailUrl?: string;
   /**
