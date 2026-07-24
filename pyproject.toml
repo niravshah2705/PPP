@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ppp-feedback"
+version = "0.1.0"
+description = "Live form/ROM feedback overlay for the PPP pose app"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.optional-dependencies]
+# OpenCV is only needed to draw the overlay onto camera frames; the core
+# scoring/ROM/cue logic has no third-party runtime dependency.
+draw = ["opencv-python>=4.5"]
+dev = ["pytest>=7.0"]
+
+[tool.setuptools]
+packages = ["ppp_feedback"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
