@@ -28,21 +28,70 @@
   background: #22c55e;
 }
 
+.session-player__set {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
 .session-player__reps {
   margin: 0;
   font-size: 0.95rem;
 }
 
+.session-player__rest {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  align-self: flex-start;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.4rem;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.9rem;
+}
+
+.session-player__skip-rest {
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.35rem;
+  border: 1px solid #92400e;
+  background: transparent;
+  color: #92400e;
+  cursor: pointer;
+}
+
+.session-player__complete {
+  margin: 0;
+  font-weight: 600;
+  color: #16a34a;
+}
+
 .session-player__controls {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-.session-player__manual-rep {
+.session-player__manual-rep,
+.session-player__complete-set,
+.session-player__next {
   padding: 0.35rem 0.9rem;
   border-radius: 0.4rem;
   border: 1px solid #4f46e5;
   background: #4f46e5;
   color: #fff;
   cursor: pointer;
+}
+
+.session-player__complete-set,
+.session-player__next {
+  background: #fff;
+  color: #4f46e5;
+}
+
+.session-player__manual-rep:disabled,
+.session-player__complete-set:disabled,
+.session-player__next:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
