@@ -1,0 +1,53 @@
+.session-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.session-list__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem 1rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #0f172a;
+  font: 14px/1.4 system-ui, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+.session-list__row:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.session-list__row--selected {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 1px #4f46e5 inset;
+}
+
+.session-list__date {
+  font-weight: 600;
+}
+
+.session-list__completion {
+  justify-self: end;
+  font-weight: 600;
+  color: #4f46e5;
+}
+
+.session-list__form,
+.session-list__counts {
+  color: #475569;
+  font-size: 13px;
+}
+
+.session-list__counts {
+  justify-self: end;
+}

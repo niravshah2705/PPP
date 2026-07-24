@@ -1,0 +1,36 @@
+.empty-sessions {
+  max-width: 28rem;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 0.75rem;
+  background: #f8fafc;
+  text-align: center;
+  font: 14px/1.5 system-ui, sans-serif;
+  color: #334155;
+}
+
+.empty-sessions__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+.empty-sessions__body {
+  margin: 0 0 1rem;
+}
+
+.empty-sessions__link {
+  display: inline-block;
+  word-break: break-all;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.empty-sessions__link:hover {
+  text-decoration: underline;
+}
