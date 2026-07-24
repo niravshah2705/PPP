@@ -1,10 +1,19 @@
 import type { PatientProgress, Session } from '../types/session';
+import type { TrackedExerciseResult } from '../lib/sessionSequencer';
 
 /** Thrown for transport/server errors while loading session-review data. */
 export class SessionLoadError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'SessionLoadError';
+  }
+}
+
+/** Thrown for transport/server errors while persisting tracked session results. */
+export class SessionSaveError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SessionSaveError';
   }
 }
 
@@ -76,4 +85,38 @@ export async function fetchProgress(
     planId: data.planId,
     series: Array.isArray(data.series) ? data.series : [],
   };
+}
+
+/**
+ * Persist one exercise's tracked results via `PATCH /api/sessions/:id`.
+ *
+ * The body carries exactly the session-schema fields the backend records per
+ * exercise — `exerciseId`, `completedReps`, `avgFormScore`, and
+ * `maxRangeOfMotionDeg` — so the auto-advance and manual paths write identical
+ * data and the review/summary screens stay consistent. Non-2xx / network
+ * failure -> {@link SessionSaveError}.
+ */
+export async function patchSessionResults(
+  sessionId: string,
+  result: TrackedExerciseResult,
+  signal?: AbortSignal,
+): Promise<void> {
+  const encoded = encodeURIComponent(sessionId);
+  let response: Response;
+  try {
+    response = await fetch(`/api/sessions/${encoded}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(result),
+      signal,
+    });
+  } catch (err) {
+    throw new SessionSaveError(
+      err instanceof Error ? err.message : 'Network error while saving session results',
+    );
+  }
+
+  if (!response.ok) {
+    throw new SessionSaveError(`Failed to save session results (HTTP ${response.status})`);
+  }
 }

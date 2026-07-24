@@ -105,3 +105,69 @@ describe('SessionPlayer graceful degradation', () => {
     expect(screen.getByTestId('rep-count')).toHaveTextContent('1');
   });
 });
+
+describe('SessionPlayer sequencer / auto-advance', () => {
+  it('reaching the target auto-completes the set and advances to rest, then completes', async () => {
+    stubEnvironment({ getUserMedia: () => Promise.reject({ name: 'NotAllowedError' }) });
+    render(<SessionPlayer exercise={exercise} targetReps={2} sets={2} restSec={30} />);
+    await screen.findByTestId('camera-notice');
+
+    const countRep = screen.getByTestId('manual-rep-button');
+    await userEvent.click(countRep);
+    await userEvent.click(countRep); // hits target → set 1 done → rest
+
+    expect(await screen.findByTestId('rest-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('set-progress')).toHaveTextContent('Set 2 of 2');
+
+    // Resume and finish set 2 → session complete.
+    await userEvent.click(screen.getByTestId('skip-rest-button'));
+    await userEvent.click(countRep);
+    await userEvent.click(countRep);
+    expect(await screen.findByTestId('session-complete')).toBeInTheDocument();
+    expect(screen.getByTestId('session-player')).toHaveAttribute('data-complete', 'true');
+  });
+
+  it('manual "Complete set" override lets the patient proceed when tracking stalls', async () => {
+    stubEnvironment({ getUserMedia: () => Promise.resolve(makeStream()) });
+    render(<SessionPlayer exercise={exercise} targetReps={5} sets={1} />);
+    await screen.findByTestId('tracking-overlay');
+
+    // Only one rep registers, then tracking stalls — the override finishes the set.
+    await userEvent.click(screen.getByTestId('manual-rep-button'));
+    await userEvent.click(screen.getByTestId('complete-set-button'));
+    expect(await screen.findByTestId('session-complete')).toBeInTheDocument();
+  });
+
+  it('manual Next advances an active set identically to reaching the target', async () => {
+    stubEnvironment({ getUserMedia: () => Promise.resolve(makeStream()) });
+    render(<SessionPlayer exercise={exercise} targetReps={3} sets={2} restSec={0} />);
+    await screen.findByTestId('tracking-overlay');
+    expect(screen.getByTestId('set-progress')).toHaveTextContent('Set 1 of 2');
+
+    // Next during an active set completes it; with no rest we land on set 2.
+    await userEvent.click(screen.getByTestId('next-button'));
+    expect(screen.getByTestId('set-progress')).toHaveTextContent('Set 2 of 2');
+    expect(screen.queryByTestId('rest-panel')).not.toBeInTheDocument();
+  });
+
+  it('PATCHes tracked results to the session as the exercise completes', async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(new Response(null, { status: 204 })));
+    vi.stubGlobal('fetch', fetchMock);
+    stubEnvironment({ getUserMedia: () => Promise.reject({ name: 'NotAllowedError' }) });
+    render(<SessionPlayer exercise={exercise} targetReps={2} sets={1} sessionId="sess-9" />);
+    await screen.findByTestId('camera-notice');
+
+    const countRep = screen.getByTestId('manual-rep-button');
+    await userEvent.click(countRep);
+    await userEvent.click(countRep);
+
+    await screen.findByTestId('session-complete');
+    const calls = fetchMock.mock.calls as unknown as Array<[string, RequestInit | undefined]>;
+    const patchCall = calls.find(
+      ([url, init]) => url === '/api/sessions/sess-9' && init?.method === 'PATCH',
+    );
+    expect(patchCall).toBeTruthy();
+    const body = JSON.parse(patchCall![1]!.body as string);
+    expect(body).toMatchObject({ exerciseId: 'knee-1', completedReps: 2 });
+  });
+});
