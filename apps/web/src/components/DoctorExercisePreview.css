@@ -1,0 +1,19 @@
+.doctor-preview {
+  margin: 0;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.doctor-preview__frame {
+  width: 320px;
+  height: 240px;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: #0b1020;
+}
+
+.doctor-preview__caption {
+  font: 13px/1.4 system-ui, sans-serif;
+  color: #475569;
+}
