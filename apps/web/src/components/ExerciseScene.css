@@ -1,0 +1,55 @@
+.exercise-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  overflow: hidden;
+}
+
+.exercise-scene__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Demo (embed) variant fills its iframe with just the looping scene. */
+.exercise-scene--demo,
+.exercise-scene--demo .exercise-scene__canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.exercise-scene__chrome {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.exercise-scene__header,
+.exercise-scene__tracking,
+.exercise-scene__controls {
+  pointer-events: auto;
+  padding: 0.75rem 1rem;
+}
+
+.exercise-scene__tracking {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.exercise-scene__tracking-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: #22c55e;
+}
+
+.exercise-scene__controls {
+  display: flex;
+  gap: 0.5rem;
+}

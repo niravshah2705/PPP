@@ -1,0 +1,16 @@
+/* The embed fills its iframe viewport with no page chrome or scrollbars. */
+.embed-exercise {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  background: #0b1020;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.embed-exercise__loading {
+  color: #cbd5e1;
+  font: 14px/1.4 system-ui, sans-serif;
+}
