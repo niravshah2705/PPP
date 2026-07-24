@@ -8,8 +8,10 @@
  */
 
 import type { Session } from '../types/session';
+import type { SharedPlan } from '../types/sharedPlan';
 import type { PlanDraftItem } from '../types/template';
 import type { SequencerExercise } from './sessionSequencer';
+import type { SequencerItem } from './exerciseSequencer';
 
 /**
  * The minimal plan shape the sequencer needs: an ordered list of dosage items.
@@ -41,6 +43,37 @@ export function planToSequencerExercises(plan: SequenceablePlan): SequencerExerc
       targetReps: item.reps,
       sets: item.sets,
       restSec: item.rest,
+    }));
+}
+
+/**
+ * Map a shared (patient-facing) plan to the {@link SequencerItem} list the
+ * instruction-screen player walks through, in play order.
+ *
+ * Unlike {@link planToSequencerExercises} (which carries only dosage for the
+ * rep counter), this expands each item's resolved exercise so the instruction
+ * screen can render its name, description, and demo media without a second
+ * lookup. Ordering follows the plan's explicit `order` (falling back to array
+ * position); the sequencer coerces out-of-range dosage, so no clamping here.
+ */
+export function sharedPlanToSequencerItems(plan: SharedPlan): SequencerItem[] {
+  return plan.items
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => {
+      const oa = a.item.order ?? a.index;
+      const ob = b.item.order ?? b.index;
+      return oa - ob;
+    })
+    .map(({ item }) => ({
+      exerciseId: item.exerciseId,
+      name: item.exercise.name,
+      description: item.exercise.description,
+      demoMediaRef: item.exercise.demoMediaRef ?? item.exercise.demoClip,
+      thumbnailUrl: item.exercise.thumbnailUrl,
+      sets: item.sets,
+      targetReps: item.reps,
+      holdSeconds: item.hold,
+      restSeconds: item.rest,
     }));
 }
 
