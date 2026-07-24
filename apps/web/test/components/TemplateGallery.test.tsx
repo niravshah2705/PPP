@@ -67,4 +67,18 @@ describe('TemplateGallery', () => {
     await user.click(screen.getByTestId('template-edit-t1'));
     expect(onEdit).toHaveBeenCalledWith(templates[0]);
   });
+
+  it('requests a preview by id on "Preview"', async () => {
+    const user = userEvent.setup();
+    const onPreview = vi.fn();
+    render(<TemplateGallery templates={templates} onPreview={onPreview} />);
+    await user.click(screen.getByTestId('template-preview-t1'));
+    expect(onPreview).toHaveBeenCalledWith('t1');
+  });
+
+  it('marks the selected card and its preview button as pressed', () => {
+    render(<TemplateGallery templates={templates} selectedId="t1" />);
+    expect(screen.getByTestId('template-card-t1')).toHaveAttribute('data-selected', 'true');
+    expect(screen.getByTestId('template-preview-t1')).toHaveAttribute('aria-pressed', 'true');
+  });
 });
