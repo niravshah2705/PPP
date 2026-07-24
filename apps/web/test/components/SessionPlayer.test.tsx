@@ -6,6 +6,16 @@ vi.mock('../../src/scene/demoScene', () => ({
   createDemoScene: vi.fn(() => ({ dispose: vi.fn(), running: true })),
 }));
 
+// Keep the pose topology/mapping real, but stub the MediaPipe WASM detector so
+// the player's live pose feed never loads the heavy runtime in unit tests.
+vi.mock('../../src/lib/poseLandmarker', async (importActual) => {
+  const actual = await importActual<typeof import('../../src/lib/poseLandmarker')>();
+  return {
+    ...actual,
+    createPoseLandmarker: vi.fn(async () => ({ detect: () => null, close: () => {} })),
+  };
+});
+
 import { SessionPlayer } from '../../src/components/SessionPlayer';
 
 const exercise = { id: 'knee-1', name: 'Knee Raise', description: 'Lift and hold' };

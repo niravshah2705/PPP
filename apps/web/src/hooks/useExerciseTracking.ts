@@ -39,6 +39,12 @@ export interface UseExerciseTrackingOptions {
 export interface UseExerciseTrackingResult {
   mode: TrackingMode;
   cameraStatus: CameraStatus;
+  /**
+   * The live camera stream while tracking (`mode === 'camera'`), else `null`.
+   * Exposed so the pose feed can run inference on the already-granted stream
+   * instead of opening a second `getUserMedia` request.
+   */
+  stream: MediaStream | null;
   /** Reps recorded so far — never reset by losing the camera. */
   reps: number;
   /** True once a previously-granted camera was lost mid-session. */
@@ -108,6 +114,7 @@ export function useExerciseTracking(
   const [cameraStatus, setCameraStatus] = useState<CameraStatus>('idle');
   const [revoked, setRevoked] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   // Freeform rep counter (used only when no exercise sequence is configured).
@@ -130,6 +137,7 @@ export function useExerciseTracking(
     const stopStream = () => {
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
+      setStream(null);
     };
 
     // A previously-granted camera dropped out mid-session: pause tracking and
@@ -150,6 +158,7 @@ export function useExerciseTracking(
       setCameraStatus(status);
       if (status === 'granted' && stream) {
         streamRef.current = stream;
+        setStream(stream);
         setRevoked(false);
         setMode('camera');
         stream.getTracks().forEach((track) => {
@@ -228,6 +237,7 @@ export function useExerciseTracking(
   return {
     mode,
     cameraStatus,
+    stream,
     reps,
     revoked,
     completeRep,

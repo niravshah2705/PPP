@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { Exercise } from '../types/exercise';
 import { ExerciseScene } from './ExerciseScene';
 import { CameraNotice } from './CameraNotice';
+import { CameraPoseFeed } from './CameraPoseFeed';
 import { useExerciseTracking } from '../hooks/useExerciseTracking';
 import type { SequencerExercise } from '../lib/sessionSequencer';
 import './SessionPlayer.css';
@@ -59,6 +60,7 @@ export function SessionPlayer({
   const {
     mode,
     cameraStatus,
+    stream,
     reps,
     revoked,
     completeRep,
@@ -98,6 +100,7 @@ export function SessionPlayer({
         ) : tracking ? (
           <div className="session-player__tracking" data-testid="tracking-overlay">
             <span className="session-player__tracking-dot" /> Tracking active
+            <CameraPoseFeed stream={stream} active={tracking} />
           </div>
         ) : (
           <CameraNotice status={cameraStatus} revoked={revoked} onRetry={retryCamera} />
