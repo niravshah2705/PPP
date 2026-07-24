@@ -2,6 +2,41 @@
 
 React front-end for the PPP exercise platform.
 
+## Joint-angle rep counter + stage detection (NIR-771)
+
+Automatic rep counting is the core monitoring signal every downstream feature
+(sequencer set-completion, live form overlay, session results) consumes. The
+pure module [`repCounter`](src/lib/repCounter.ts) turns a pose **landmark
+stream** into reps/holds using each exercise's tracking config
+([`ExerciseTracking`](src/types/exercise.ts)).
+
+- **Angle from landmarks.** `computeJointAngle` derives the interior angle at the
+  configured `angleJoint` (a `from → vertex → to` landmark triplet) via a
+  numerically-robust `atan2(|v1×v2|, v1·v2)`.
+- **Hysteretic stage detection.** The band between `repDownAngle` and
+  `repUpAngle` is a dead-zone: the stage only flips once the angle fully crosses
+  a threshold, so noise near one threshold cannot bounce the stage. A rep is a
+  complete **down→up** cycle, counted exactly once. Works whether extension or
+  flexion is the "up" stage (inferred from which threshold is larger).
+- **Jitter smoothing.** A moving average (`smoothingWindow`) damps a spurious
+  spike so it cannot cross a threshold and double-count. Partial movements that
+  never cross both thresholds are never counted.
+- **Hold-type exercises.** When `holdAngle` is set, the module accumulates
+  sustained seconds past the target (`holdDirection` `below`/`above`) from frame
+  timestamps instead of counting reps.
+- **Confidence gating.** Frames whose landmark confidence is below
+  `minConfidence` (or that are geometrically degenerate) **pause** tracking —
+  angle/stage/hold state is left untouched and resumes cleanly, and paused gaps
+  never inflate hold seconds.
+- **Deterministic & testable.** The core is a pure reducer,
+  `observeFrame(state, frame) → { state, events }` (plus `observeSequence`), so
+  recorded landmark fixtures reproduce identical reps/holds/events. `RepCounter`
+  is a thin stateful wrapper that dispatches `repCompleted` (and stage / hold /
+  pause) events to listeners for real-time use.
+
+Covered by `test/lib/repCounter.test.ts`, driven by the coordinate fixtures in
+`test/fixtures/landmarks.ts`.
+
 ## Embeddable exercise demo (NIR-777)
 
 Route **`/embed/exercise/:id`** renders _only_ the looping 3D demo scene — no
