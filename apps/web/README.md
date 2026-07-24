@@ -83,6 +83,40 @@ Covered by `test/components/PlanDraftEditor.test.tsx`, `test/api/plans.test.ts`,
 `test/lib/planLink.test.ts`, and the `test/e2e/doctorPlanBuilder.e2e.test.tsx`
 hand-off flow.
 
+## Start session + record per-exercise results (NIR-767)
+
+Monitoring needs a record of what happened, so opening a plan as a patient at
+**`/patient?planId=`** creates and updates a **Session** as the patient works
+through the plan. This is the backbone later pose-tracking features feed into.
+
+- **Load + resume.** [`PatientPlanPage`](src/routes/PatientPlanPage.tsx) resolves
+  the plan behind the `planId` query param (the exact link the doctor shares, via
+  [`patientPlanPath`](src/lib/planLink.ts)) through [`usePlan`](src/hooks/usePlan.ts).
+  On open, [`PatientPlanPlayer`](src/components/PatientPlanPlayer.tsx) checks the
+  plan's sessions and — because a tab closed mid-session leaves a record
+  `in_progress` — surfaces a **resume prompt** ([`findResumableSession`](src/lib/planSession.ts))
+  offering _Resume_ or _Start over_.
+- **Start.** Start opens a new `in_progress` session via
+  [`createSession`](src/api/sessions.ts) (`POST /api/sessions`), tied to the loaded
+  plan's `planId` and `patientName`.
+- **Record as you go.** The plan's dosage items become the sequencer's exercise
+  list ([`planToSequencerExercises`](src/lib/planSession.ts)); each finished
+  exercise's aggregate (reps/form/ROM) is handed to
+  [`useSessionRecorder`](src/hooks/useSessionRecorder.ts), which **debounces and
+  batches** the `PATCH /api/sessions/:id`.
+- **No data loss.** The [`SessionResultRecorder`](src/lib/sessionRecorder.ts)
+  keeps a local, exerciseId-keyed **buffer**: a failed PATCH is _kept_ and retried
+  on the next transition (next exercise, an explicit retry, or finalise), so a
+  transient network error never discards buffered results.
+- **Finalise.** On completion the session is finalised
+  ([`finalizeSession`](src/api/sessions.ts) → `status: 'completed'`, `completedAt`)
+  — but only once the buffer has drained, so finishing never abandons unsaved
+  results. A failed flush/finalise leaves a clear retry affordance.
+
+Covered by `test/api/sessions.test.ts`, `test/lib/sessionRecorder.test.ts`,
+`test/lib/planSession.test.ts`, `test/hooks/useSessionRecorder.test.ts`, and the
+`test/components/PatientPlanPlayer.test.tsx` start→record→retry→finalise flow.
+
 ## Patient context selector (NIR-759)
 
 With no authentication, every plan must still be tied to a patient, so the doctor

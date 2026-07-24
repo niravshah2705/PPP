@@ -25,8 +25,22 @@ export interface ExerciseResult {
 }
 
 /**
- * A single completed session for a plan. `completionPct` and `avgForm` are the
- * persisted, authoritative values — the dashboard renders them verbatim.
+ * Lifecycle of a session as the patient works through the plan.
+ *
+ * - `in_progress` — created on Start; results are still being recorded. Closing
+ *   the tab mid-session leaves the record here, so reopening the plan can offer
+ *   to resume it.
+ * - `completed`   — finalised on the completion screen (`completedAt` set).
+ */
+export type SessionStatus = 'in_progress' | 'completed';
+
+/**
+ * A single session for a plan. `completionPct` and `avgForm` are the persisted,
+ * authoritative values — the review dashboard renders them verbatim.
+ *
+ * The lifecycle fields (`status`, `startedAt`, `completedAt`) are written by the
+ * patient player as it creates, updates, and finalises the session. They are
+ * optional so existing plan-scoped/review consumers are unaffected.
  */
 export interface Session {
   id: string;
@@ -38,6 +52,16 @@ export interface Session {
   patientName?: string;
   /** ISO-8601 timestamp of when the session occurred. */
   date: string;
+  /**
+   * Lifecycle status. Absent on legacy/review records (treated as completed by
+   * the review screens); the player writes `in_progress` on create and
+   * `completed` on finalise.
+   */
+  status?: SessionStatus;
+  /** ISO-8601 timestamp the session was created (Start). */
+  startedAt?: string;
+  /** ISO-8601 timestamp the session was finalised, set only once completed. */
+  completedAt?: string;
   /** Persisted completion percentage (0–100). */
   completionPct: number;
   /** Persisted average form score (0–100), or null when unmeasured. */

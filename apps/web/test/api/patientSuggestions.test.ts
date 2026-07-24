@@ -20,7 +20,7 @@ afterEach(() => {
 
 describe('fetchPatientNameSuggestions', () => {
   it('queries GET /api/plans?patientName=<query> and returns distinct names', async () => {
-    const fetchFn = vi.fn((_input: RequestInfo | URL) =>
+    const fetchFn = vi.fn<(input: RequestInfo | URL) => Promise<Response>>(() =>
       Promise.resolve(json([plan('Ada Lovelace'), plan('ada lovelace'), plan('Bob Stone')])),
     );
     vi.stubGlobal('fetch', fetchFn);
@@ -32,7 +32,9 @@ describe('fetchPatientNameSuggestions', () => {
   });
 
   it('trims the query and encodes it into the patientName param', async () => {
-    const fetchFn = vi.fn((_input: RequestInfo | URL) => Promise.resolve(json([])));
+    const fetchFn = vi.fn<(input: RequestInfo | URL) => Promise<Response>>(() =>
+      Promise.resolve(json([])),
+    );
     vi.stubGlobal('fetch', fetchFn);
 
     await fetchPatientNameSuggestions('  Bob Stone  ');
@@ -41,7 +43,9 @@ describe('fetchPatientNameSuggestions', () => {
   });
 
   it('defaults to an empty query listing every previously-used patient', async () => {
-    const fetchFn = vi.fn((_input: RequestInfo | URL) => Promise.resolve(json([plan('Ada')])));
+    const fetchFn = vi.fn<(input: RequestInfo | URL) => Promise<Response>>(() =>
+      Promise.resolve(json([plan('Ada')])),
+    );
     vi.stubGlobal('fetch', fetchFn);
 
     const names = await fetchPatientNameSuggestions();

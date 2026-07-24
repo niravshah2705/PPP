@@ -1,0 +1,91 @@
+.patient-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.patient-plan__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.patient-plan__title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.patient-plan__patient {
+  margin: 0;
+  color: #4b5563;
+}
+
+.patient-plan__resume,
+.patient-plan__start,
+.patient-plan__session {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+}
+
+.patient-plan__resume-actions,
+.patient-plan__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.patient-plan__tracking {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #047857;
+}
+
+.patient-plan__tracking-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: #10b981;
+}
+
+.patient-plan__rest {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #f1f5f9;
+  border-radius: 0.375rem;
+}
+
+.patient-plan__save-warning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 0.375rem;
+  color: #92400e;
+}
+
+.patient-plan__complete {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #047857;
+}
+
+.patient-plan__error {
+  color: #b91c1c;
+}
