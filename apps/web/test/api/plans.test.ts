@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  PlanConflictError,
   PlanLoadError,
   PlanNotFoundError,
   PlanValidationError,
@@ -115,6 +116,26 @@ describe('savePlan', () => {
       name: 'PlanValidationError',
       fieldErrors: { 'items[0].reps': 'nope' },
     });
+  });
+
+  it('throws PlanConflictError on HTTP 409 (concurrent edit) without mutating the draft', async () => {
+    const fn = mockFetch(() => new Response('conflict', { status: 409 }));
+    await expect(savePlan({ ...validDraft, id: 'p1' })).rejects.toBeInstanceOf(PlanConflictError);
+    // A conflict is a PUT rejection — nothing else was retried automatically.
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  it('throws PlanNotFoundError on HTTP 404 when updating a missing plan', async () => {
+    mockFetch(() => new Response('nope', { status: 404 }));
+    await expect(savePlan({ ...validDraft, id: 'gone' })).rejects.toBeInstanceOf(PlanNotFoundError);
+  });
+
+  it('wraps network failures as PlanLoadError (draft kept for retry)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new Error('offline'))),
+    );
+    await expect(savePlan(validDraft)).rejects.toBeInstanceOf(PlanLoadError);
   });
 
   it('throws PlanLoadError on other non-2xx', async () => {

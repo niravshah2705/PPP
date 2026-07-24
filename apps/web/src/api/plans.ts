@@ -23,6 +23,18 @@ export class PlanNotFoundError extends Error {
 }
 
 /**
+ * Thrown when a save is rejected because the plan changed underneath us
+ * (HTTP 409). The draft is never mutated, so the builder can keep it intact and
+ * offer a retry.
+ */
+export class PlanConflictError extends Error {
+  constructor(message = 'This plan was changed elsewhere. Reload or retry to save.') {
+    super(message);
+    this.name = 'PlanConflictError';
+  }
+}
+
+/**
  * Thrown when a plan draft fails validation — either locally before the request
  * or by the server (HTTP 422), which mirrors the same dosage rules. Carries the
  * field-keyed errors so the builder can surface them on the correct controls.
@@ -93,15 +105,18 @@ export async function fetchPlans(signal?: AbortSignal): Promise<Plan[]> {
 /**
  * Persist a plan draft. A draft without an `id` is created via
  * `POST /api/plans`; one carrying an `id` (opened along the edit path) is
- * updated in place via `PUT /api/plans/:id`.
+ * updated in place via `PUT /api/plans/:id`, so re-saving an already-loaded plan
+ * never creates a duplicate — the server keeps `createdAt` and bumps `updatedAt`.
  *
  * The draft is validated client-side first — the shared plan rules plus a
  * required patient — so nothing invalid is ever sent or persisted and errors
  * surface on the right controls without a round trip. The server mirrors the
  * same rules and answers 422 with field errors, surfaced as
- * {@link PlanValidationError}. On success the persisted {@link Plan} (with a
- * server id and `updatedAt`) is returned so the builder can show the shareable
- * patient link.
+ * {@link PlanValidationError}. A concurrent-edit rejection (409) becomes a
+ * {@link PlanConflictError}; a transport failure becomes a {@link PlanLoadError}.
+ * Neither mutates the draft, so the builder can keep it intact and offer a retry.
+ * On success the persisted {@link Plan} (with a server id and `updatedAt`) is
+ * returned so the builder can show the shareable patient link.
  */
 export async function savePlan(
   draft: PlanDraft,
@@ -134,6 +149,9 @@ export async function savePlan(
   if (response.status === 404) {
     throw new PlanNotFoundError(draft.id ?? '');
   }
+  if (response.status === 409) {
+    throw new PlanConflictError();
+  }
   if (!response.ok) {
     throw new PlanLoadError(`Failed to save plan (HTTP ${response.status})`);
   }
@@ -143,8 +161,9 @@ export async function savePlan(
 
 /**
  * Resolve a single plan via the share endpoint `GET /api/plans/:id` — the same
- * lookup a patient's shareable deep link (`/plan/:id`) resolves through, so the
- * doctor builder and the patient view connect on one persisted record.
+ * lookup a patient's shareable deep link (`/patient?planId=...`) resolves
+ * through, so the doctor builder and the patient view connect on one persisted
+ * record.
  *
  * - 404 -> {@link PlanNotFoundError}.
  * - other non-2xx / network failure / malformed payload -> {@link PlanLoadError}.

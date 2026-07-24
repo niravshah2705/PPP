@@ -4,7 +4,7 @@ import type { Plan } from '../types/plan';
 import type { PlanDraft, PlanDraftItem, TemplateItem } from '../types/template';
 import { savePlan, PlanValidationError } from '../api/plans';
 import { appendExerciseToItems, validatePlanForSave } from '../lib/planDraft';
-import { patientPlanShareUrl } from '../lib/planLink';
+import { patientPlanPath, patientPlanShareUrl } from '../lib/planLink';
 import { errorsByField } from '../lib/templateValidation';
 import { ExercisePicker } from './ExercisePicker';
 import { TemplateItemEditor } from './TemplateItemEditor';
@@ -28,10 +28,13 @@ export interface PlanDraftEditorProps {
  * flags them) so a doctor can deliberately add the same exercise twice.
  *
  * Assigning a patient and pressing "Save plan" persists the customized draft via
- * {@link savePlan} (create, or in-place update when the draft carries an id).
- * Saving is blocked while any field is invalid — the error surfaces inline and
- * nothing is persisted. On success the generated shareable patient link is shown
- * so the doctor can hand the plan off, connecting the builder to the patient view.
+ * {@link savePlan} (create, or in-place update when the draft carries an id, so
+ * editing a loaded plan never creates a duplicate). Saving is blocked while any
+ * field is invalid — the error surfaces inline and nothing is persisted. On
+ * success the confirmation shows the returned plan id, a copyable shareable
+ * patient link, and an "open as patient" shortcut, all pointing at the same
+ * route the patient view resolves. A conflict or network failure leaves the
+ * draft intact and offers a retry.
  */
 export function PlanDraftEditor({ draft, knownExerciseIds, onSaved }: PlanDraftEditorProps) {
   const [items, setItems] = useState<PlanDraftItem[]>(() => draft.items.map((i) => ({ ...i })));
@@ -41,6 +44,7 @@ export function PlanDraftEditor({ draft, knownExerciseIds, onSaved }: PlanDraftE
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
   const [saveError, setSaveError] = useState<string | undefined>();
   const [savedPlan, setSavedPlan] = useState<Plan | undefined>();
+  const [copied, setCopied] = useState(false);
 
   const existingIds = useMemo(
     () => new Set(items.map((item) => item.exerciseId)),
@@ -89,8 +93,12 @@ export function PlanDraftEditor({ draft, knownExerciseIds, onSaved }: PlanDraftE
     try {
       const saved = await savePlan(draftToSave, knownExerciseIds);
       setSavedPlan(saved);
+      setCopied(false);
       onSaved?.(saved);
     } catch (err) {
+      // Validation errors land on the offending controls; a conflict or network
+      // failure leaves the draft untouched (still in state) and is surfaced with
+      // a retry affordance so the doctor never loses their work.
       if (err instanceof PlanValidationError) {
         setServerErrors(err.fieldErrors);
       } else {
@@ -98,6 +106,20 @@ export function PlanDraftEditor({ draft, knownExerciseIds, onSaved }: PlanDraftE
       }
     } finally {
       setSaving(false);
+    }
+  };
+
+  const shareUrl = savedPlan ? patientPlanShareUrl(savedPlan.id) : '';
+
+  const handleCopyLink = async () => {
+    if (!savedPlan) return;
+    try {
+      await navigator.clipboard?.writeText(shareUrl);
+      setCopied(true);
+    } catch {
+      // Clipboard denied/unavailable: leave the label unchanged rather than
+      // claiming a copy that did not happen. The link is still selectable.
+      setCopied(false);
     }
   };
 
@@ -158,9 +180,19 @@ export function PlanDraftEditor({ draft, knownExerciseIds, onSaved }: PlanDraftE
       <ExercisePicker existingExerciseIds={existingIds} onSelect={handleAddExercise} />
 
       {saveError && (
-        <p className="plan-draft-editor__error" role="alert" data-testid="plan-draft-save-error">
-          {saveError}
-        </p>
+        <div className="plan-draft-editor__save-failure" role="alert" data-testid="plan-draft-save-error">
+          <p className="plan-draft-editor__error">{saveError}</p>
+          {/* The draft is still in state, so retrying re-sends it as-is. */}
+          <button
+            type="button"
+            className="plan-draft-editor__retry"
+            data-testid="plan-draft-retry"
+            disabled={saving}
+            onClick={handleSave}
+          >
+            Retry save
+          </button>
+        </div>
       )}
 
       <button
@@ -176,15 +208,35 @@ export function PlanDraftEditor({ draft, knownExerciseIds, onSaved }: PlanDraftE
       {savedPlan && (
         <div className="plan-draft-editor__saved" role="status" data-testid="plan-draft-saved">
           <p>
-            Plan saved for <strong>{savedPlan.patientName}</strong>. Share this link with the
+            Plan saved for <strong>{savedPlan.patientName}</strong> (plan id{' '}
+            <code data-testid="plan-draft-plan-id">{savedPlan.id}</code>). Share this link with the
             patient:
           </p>
+          <div className="plan-draft-editor__share">
+            <a
+              className="plan-draft-editor__share-link"
+              href={shareUrl}
+              data-testid="plan-draft-share-link"
+            >
+              {shareUrl}
+            </a>
+            <button
+              type="button"
+              className="plan-draft-editor__copy"
+              data-testid="plan-draft-copy-link"
+              onClick={handleCopyLink}
+            >
+              {copied ? 'Copied!' : 'Copy link'}
+            </button>
+          </div>
           <a
-            className="plan-draft-editor__share-link"
-            href={patientPlanShareUrl(savedPlan.id)}
-            data-testid="plan-draft-share-link"
+            className="plan-draft-editor__open-as-patient"
+            href={patientPlanPath(savedPlan.id)}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-testid="plan-draft-open-as-patient"
           >
-            {patientPlanShareUrl(savedPlan.id)}
+            Open as patient
           </a>
         </div>
       )}

@@ -93,7 +93,70 @@
   font-size: 13px;
 }
 
+.plan-draft-editor__share {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .plan-draft-editor__share-link {
   word-break: break-all;
   color: #4f46e5;
+}
+
+.plan-draft-editor__copy {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  border: 1px solid #4f46e5;
+  border-radius: 6px;
+  background: #fff;
+  color: #4f46e5;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.plan-draft-editor__open-as-patient {
+  align-self: flex-start;
+  margin-top: 4px;
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+.plan-draft-editor__saved code {
+  background: #dcfce7;
+  border-radius: 4px;
+  padding: 0 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.plan-draft-editor__save-failure {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+}
+
+.plan-draft-editor__save-failure .plan-draft-editor__error {
+  margin: 0;
+}
+
+.plan-draft-editor__retry {
+  flex: 0 0 auto;
+  padding: 4px 12px;
+  border: 1px solid #b91c1c;
+  border-radius: 6px;
+  background: #fff;
+  color: #b91c1c;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.plan-draft-editor__retry:disabled {
+  opacity: 0.6;
+  cursor: progress;
 }

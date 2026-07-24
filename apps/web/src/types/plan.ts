@@ -17,6 +17,12 @@ export interface Plan {
   templateName?: string;
   /** Ordered exercise items with their dosage. */
   items: PlanDraftItem[];
+  /**
+   * ISO timestamp of when the plan was first persisted. Server-managed: set once
+   * on create and preserved across edits (an update bumps `updatedAt`, never
+   * this), so the record's origin stays stable.
+   */
+  createdAt?: string;
   /** ISO timestamp of the last edit; drives newest-first ordering. */
   updatedAt: string;
 }

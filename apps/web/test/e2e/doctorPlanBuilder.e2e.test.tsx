@@ -175,16 +175,17 @@ describe('doctor plan-builder flow (E2E, real API on a temporary store)', () => 
     expect(persisted.templateName).toBe('Knee rehab');
     expect(persisted.items).toEqual(body.items);
 
-    // 3) The confirmation shows the generated patient link.
+    // 3) The confirmation shows the returned plan id and the generated patient link.
+    expect(screen.getByTestId('plan-draft-plan-id')).toHaveTextContent(persisted.id);
     const link = screen.getByTestId('plan-draft-share-link');
-    const expectedUrl = `${window.location.origin}/plan/${persisted.id}`;
+    const expectedUrl = `${window.location.origin}/patient?planId=${persisted.id}`;
     expect(link).toHaveAttribute('href', expectedUrl);
     expect(link).toHaveTextContent(expectedUrl);
 
     // 4) The generated link resolves via the share endpoint so the two views connect.
-    const sharedId = new URL(link.getAttribute('href')!).pathname.replace('/plan/', '');
+    const sharedId = new URL(link.getAttribute('href')!).searchParams.get('planId');
     expect(sharedId).toBe(persisted.id);
-    const resolved = await fetchPlan(sharedId);
+    const resolved = await fetchPlan(sharedId!);
     expect(resolved).toEqual(persisted);
     expect(fetchSpy).toHaveBeenCalledWith(`/api/plans/${persisted.id}`, expect.anything());
   });

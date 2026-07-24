@@ -56,6 +56,33 @@ Component tests mock `getUserMedia` and `navigator.xr` to verify each path — s
 `test/lib/deviceCapabilities.test.ts`, `test/hooks/useExerciseTracking.test.ts`,
 `test/components/SessionPlayer.test.tsx`, and `test/components/ExerciseScene.test.tsx`.
 
+## Save plan + shareable patient link (NIR-764)
+
+Saving a draft turns it into a persisted plan the patient can open, completing
+the doctor's hand-off. The builder ([`PlanDraftEditor`](src/components/PlanDraftEditor.tsx))
+drives the whole path:
+
+- **Save** calls [`savePlan`](src/api/plans.ts): a draft without an `id` is
+  `POST /api/plans` (create); one carrying an `id` (opened along the edit path)
+  is `PUT /api/plans/:id`, so editing a previously loaded plan updates it in
+  place — no duplicate — with the server keeping `createdAt` and bumping
+  `updatedAt`.
+- **Confirmation** shows the returned **plan id**, a **copyable** patient link,
+  and an **"open as patient"** shortcut. The link is built by the single
+  source of truth [`patientPlanPath`](src/lib/planLink.ts) as
+  `/patient?planId=...` — the exact route the patient view resolves — so the
+  doctor and patient views connect through one persisted plan. Every
+  "share with patient" surface (plan list copy, empty-session prompt) resolves
+  through the same helper.
+- **Errors don't lose the draft.** Backend field errors (HTTP 422) map to inline
+  messages on the offending controls; a save conflict (409 → `PlanConflictError`)
+  or a network failure (`PlanLoadError`) leaves the draft intact and offers a
+  **Retry**.
+
+Covered by `test/components/PlanDraftEditor.test.tsx`, `test/api/plans.test.ts`,
+`test/lib/planLink.test.ts`, and the `test/e2e/doctorPlanBuilder.e2e.test.tsx`
+hand-off flow.
+
 ## Scripts
 
 ```bash
