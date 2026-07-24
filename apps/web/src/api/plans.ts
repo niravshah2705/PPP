@@ -7,6 +7,7 @@ import {
 } from '../lib/templateValidation';
 import { validatePlanForSave } from '../lib/planDraft';
 import { distinctPatientNames } from '../lib/patientSuggestions';
+import { mostRecentPlanForPatient } from '../lib/planList';
 
 /** Thrown for transport/server errors while loading plans. */
 export class PlanLoadError extends Error {
@@ -290,4 +291,57 @@ export async function fetchPatientNameSuggestions(
   const data = (await response.json()) as unknown;
   if (!Array.isArray(data)) return [];
   return distinctPatientNames(data as Plan[]);
+}
+
+/** Lenient guard: keep only records with the fields the resolver relies on. */
+function isResolvablePlan(value: unknown): value is Plan {
+  const p = value as Plan;
+  return (
+    !!p &&
+    typeof p.id === 'string' &&
+    typeof p.patientName === 'string' &&
+    typeof p.updatedAt === 'string'
+  );
+}
+
+/**
+ * Resolve the id of a patient's most recent plan via
+ * `GET /api/plans?patientName=<name>` — the patient view's alternate entry point
+ * when it is opened with a `patientName` instead of a `planId` (NIR-765).
+ *
+ * The list endpoint is a best-effort substring match, so this narrows to plans
+ * whose patient name matches exactly and returns the newest by `updatedAt`
+ * (see {@link mostRecentPlanForPatient}). Returns `null` when the name is blank
+ * or no plan matches, so the caller shows a friendly empty state instead of
+ * crashing. A non-2xx response or transport failure raises {@link PlanLoadError}.
+ */
+export async function fetchMostRecentPlanIdForPatient(
+  patientName: string,
+  signal?: AbortSignal,
+): Promise<string | null> {
+  const trimmed = patientName.trim();
+  if (!trimmed) return null;
+
+  const params = new URLSearchParams({ patientName: trimmed });
+  let response: Response;
+  try {
+    response = await fetch(`/api/plans?${params.toString()}`, {
+      headers: { Accept: 'application/json' },
+      signal,
+    });
+  } catch (err) {
+    throw new PlanLoadError(
+      err instanceof Error ? err.message : 'Network error while resolving patient plan',
+    );
+  }
+
+  if (!response.ok) {
+    throw new PlanLoadError(`Failed to resolve patient plan (HTTP ${response.status})`);
+  }
+
+  const data = (await response.json()) as unknown;
+  if (!Array.isArray(data)) return null;
+  const plans = data.filter(isResolvablePlan);
+  const plan = mostRecentPlanForPatient(plans, trimmed);
+  return plan ? plan.id : null;
 }

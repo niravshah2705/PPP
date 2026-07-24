@@ -30,6 +30,29 @@ export function filterPlansByQuery(plans: readonly Plan[], query: string): Plan[
   });
 }
 
+/**
+ * Pick the most recent plan assigned to `patientName`, or null when none match.
+ *
+ * Backs the patient view's `?patientName=` entry point (NIR-765): the `GET
+ * /api/plans?patientName=` list is a best-effort substring match, so this
+ * narrows to plans whose patient name matches exactly (trimmed,
+ * case-insensitive) and returns the newest by `updatedAt`. An empty/whitespace
+ * query never matches, so the caller falls back to a clear empty state rather
+ * than silently opening someone else's plan.
+ */
+export function mostRecentPlanForPatient(
+  plans: readonly Plan[],
+  patientName: string,
+): Plan | null {
+  const needle = patientName.trim().toLowerCase();
+  if (!needle) return null;
+  const matches = plans.filter(
+    (plan) => plan.patientName.trim().toLowerCase() === needle,
+  );
+  if (matches.length === 0) return null;
+  return sortPlansByUpdatedAt(matches)[0];
+}
+
 /** Deep-copy plan items so a draft never mutates the source plan's items. */
 function cloneItems(items: readonly PlanDraftItem[]): PlanDraftItem[] {
   return items.map((item) => ({ ...item }));

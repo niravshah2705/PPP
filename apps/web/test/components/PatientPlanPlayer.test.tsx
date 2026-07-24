@@ -83,6 +83,43 @@ describe('PatientPlanPlayer — start + resume', () => {
     await screen.findByTestId('active-session');
   });
 
+  it('autoStart begins the session without a manual Start click', async () => {
+    stubNoCamera();
+    const startSession = vi.fn(() => Promise.resolve(fresh({ id: 'sess-auto' })));
+    render(
+      <PatientPlanPlayer
+        plan={plan}
+        loadSessions={() => Promise.resolve([])}
+        startSession={startSession}
+        transport={{ patch: vi.fn(() => Promise.resolve()), finalize: vi.fn(() => Promise.resolve()) }}
+        recorderDebounceMs={0}
+        autoStart
+      />,
+    );
+
+    // No manual button is presented; the session opens on its own.
+    await screen.findByTestId('active-session');
+    expect(startSession).toHaveBeenCalledWith({ planId: 'plan-1', patientName: 'Jamie' });
+  });
+
+  it('autoStart still surfaces the resume prompt (does not skip a resume decision)', async () => {
+    stubNoCamera();
+    const startSession = vi.fn(() => Promise.resolve(fresh({ id: 'sess-3' })));
+    render(
+      <PatientPlanPlayer
+        plan={plan}
+        loadSessions={() => Promise.resolve([fresh({ id: 'open', status: 'in_progress' })])}
+        startSession={startSession}
+        transport={{ patch: vi.fn(() => Promise.resolve()), finalize: vi.fn(() => Promise.resolve()) }}
+        recorderDebounceMs={0}
+        autoStart
+      />,
+    );
+
+    await screen.findByTestId('resume-prompt');
+    expect(startSession).not.toHaveBeenCalled();
+  });
+
   it('renders a friendly message for a plan with no exercises', async () => {
     stubNoCamera();
     render(
