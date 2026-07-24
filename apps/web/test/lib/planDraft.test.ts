@@ -2,8 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   appendExerciseToItems,
   defaultPlanDraftItem,
+  estimateItemDurationSeconds,
+  estimatePlanDurationSeconds,
+  formatPlanDuration,
   isExerciseInDraft,
+  movePlanItem,
   nextPlanOrder,
+  normalizePlanOrder,
   validatePlanDraft,
 } from '../../src/lib/planDraft';
 import type { Exercise } from '../../src/types/exercise';
@@ -60,6 +65,64 @@ describe('appendExerciseToItems', () => {
     const result = appendExerciseToItems(items, dup);
     expect(result.filter((i) => i.exerciseId === 'knee-1')).toHaveLength(2);
     expect(result[2].order).toBe(2);
+  });
+});
+
+describe('normalizePlanOrder', () => {
+  it('assigns each item a gap-free order equal to its position', () => {
+    const result = normalizePlanOrder(items);
+    expect(result.map((i) => i.order)).toEqual([0, 1]);
+    // Pure: input untouched.
+    expect(items.every((i) => i.order === undefined)).toBe(true);
+  });
+});
+
+describe('movePlanItem', () => {
+  it('moves an item down and re-normalizes deterministic order values', () => {
+    const result = movePlanItem(items, 0, 1);
+    expect(result.map((i) => i.exerciseId)).toEqual(['knee-2', 'knee-1']);
+    expect(result.map((i) => i.order)).toEqual([0, 1]);
+  });
+
+  it('moves an item up and is stable for the untouched items', () => {
+    const three: PlanDraftItem[] = [
+      { exerciseId: 'a', sets: 1, reps: 1, hold: 0, rest: 0 },
+      { exerciseId: 'b', sets: 1, reps: 1, hold: 0, rest: 0 },
+      { exerciseId: 'c', sets: 1, reps: 1, hold: 0, rest: 0 },
+    ];
+    const result = movePlanItem(three, 2, 0);
+    expect(result.map((i) => i.exerciseId)).toEqual(['c', 'a', 'b']);
+    expect(result.map((i) => i.order)).toEqual([0, 1, 2]);
+  });
+
+  it('is a no-op for out-of-range or identical indices and never mutates input', () => {
+    expect(movePlanItem(items, 0, 0).map((i) => i.exerciseId)).toEqual(['knee-1', 'knee-2']);
+    expect(movePlanItem(items, -1, 0)).toHaveLength(2);
+    expect(movePlanItem(items, 0, 5)).toHaveLength(2);
+    expect(items).toHaveLength(2);
+  });
+});
+
+describe('estimate duration', () => {
+  it('sums work per set plus rest between sets (no trailing rest)', () => {
+    // 3 sets × (10 reps × 3s + 5s hold) = 105; rest 30 × 2 gaps = 60 → 165.
+    expect(estimateItemDurationSeconds(items[0])).toBe(165);
+    // 2 sets × (15 × 3 + 0) = 90; rest 45 × 1 gap = 45 → 135.
+    expect(estimateItemDurationSeconds(items[1])).toBe(135);
+    expect(estimatePlanDurationSeconds(items)).toBe(300);
+  });
+
+  it('treats invalid/NaN dosage as zero', () => {
+    const bad: PlanDraftItem = { exerciseId: 'x', sets: Number.NaN, reps: 10, hold: 0, rest: 30 };
+    expect(estimateItemDurationSeconds(bad)).toBe(0);
+    expect(estimatePlanDurationSeconds([])).toBe(0);
+  });
+
+  it('formats durations as m/s', () => {
+    expect(formatPlanDuration(0)).toBe('0s');
+    expect(formatPlanDuration(45)).toBe('45s');
+    expect(formatPlanDuration(165)).toBe('2m 45s');
+    expect(formatPlanDuration(300)).toBe('5m 0s');
   });
 });
 

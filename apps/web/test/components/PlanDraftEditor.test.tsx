@@ -142,6 +142,80 @@ describe('PlanDraftEditor', () => {
   });
 });
 
+describe('PlanDraftEditor — live summary, reorder & empty-plan', () => {
+  it('shows an estimated duration that reflects dosage edits immediately', async () => {
+    stubLibrary();
+    const user = userEvent.setup();
+    render(<PlanDraftEditor draft={draft} />);
+
+    // 3 sets × (10 reps × 3s + 5s hold) + 30s × 2 gaps = 165s → 2m 45s.
+    expect(screen.getByTestId('plan-draft-duration')).toHaveTextContent('2m 45s');
+
+    const sets = screen.getByTestId('item-0-sets');
+    await user.clear(sets);
+    await user.type(sets, '1');
+    // 1 set × (10 × 3 + 5) = 35s → 35s, no between-set rest.
+    expect(screen.getByTestId('plan-draft-duration')).toHaveTextContent('35s');
+
+    await screen.findByTestId('exercise-option-knee-3');
+  });
+
+  it('reorders items via the move buttons and keeps deterministic order', async () => {
+    stubLibrary();
+    const user = userEvent.setup();
+    render(<PlanDraftEditor draft={draft} />);
+
+    await user.click(await screen.findByTestId('exercise-option-knee-3'));
+    expect(screen.getByTestId('item-0-exerciseId')).toHaveValue('knee-1');
+    expect(screen.getByTestId('item-1-exerciseId')).toHaveValue('knee-3');
+
+    // Move the first item down; the list swaps.
+    await user.click(screen.getByTestId('plan-item-0-move-down'));
+    expect(screen.getByTestId('item-0-exerciseId')).toHaveValue('knee-3');
+    expect(screen.getByTestId('item-1-exerciseId')).toHaveValue('knee-1');
+
+    // Up on the first item and down on the last item are disabled (edge stable).
+    expect(screen.getByTestId('plan-item-0-move-up')).toBeDisabled();
+    expect(screen.getByTestId('plan-item-1-move-down')).toBeDisabled();
+  });
+
+  it('persists the reordered, normalized order on save', async () => {
+    let posted: PlanDraft | undefined;
+    stubApi((method, _path, body) => {
+      posted = body;
+      return method === 'POST' ? json(savedPlan, 201) : json({}, 500);
+    });
+    const user = userEvent.setup();
+    render(<PlanDraftEditor draft={draft} />);
+
+    await user.click(await screen.findByTestId('exercise-option-knee-3'));
+    await user.click(screen.getByTestId('plan-item-0-move-down'));
+
+    await user.type(screen.getByTestId('plan-draft-patient'), 'Ada Lovelace');
+    await user.click(screen.getByTestId('plan-draft-save'));
+    await screen.findByTestId('plan-draft-saved');
+
+    expect(posted?.items).toEqual([
+      { exerciseId: 'knee-3', sets: 1, reps: 10, hold: 0, rest: 30, order: 0 },
+      { exerciseId: 'knee-1', sets: 3, reps: 10, hold: 5, rest: 30, order: 1 },
+    ]);
+  });
+
+  it('removing the last item disables save with an add-at-least-one message', async () => {
+    stubLibrary();
+    const user = userEvent.setup();
+    render(<PlanDraftEditor draft={draft} />);
+
+    await user.click(screen.getByTestId('item-0-remove'));
+
+    expect(screen.getByTestId('plan-draft-summary')).toHaveTextContent('0 exercises in plan');
+    expect(screen.getByTestId('plan-draft-items-error')).toHaveTextContent('Add at least one exercise');
+    expect(screen.getByTestId('plan-draft-save')).toBeDisabled();
+
+    await screen.findByTestId('exercise-option-knee-3');
+  });
+});
+
 describe('PlanDraftEditor — save confirmation & hand-off', () => {
   it('shows the returned plan id and a copyable /patient link plus an open-as-patient shortcut', async () => {
     stubApi((method) => (method === 'POST' ? json(savedPlan, 201) : json({}, 500)));
