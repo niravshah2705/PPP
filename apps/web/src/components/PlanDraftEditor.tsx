@@ -3,7 +3,13 @@ import type { Exercise } from '../types/exercise';
 import type { Plan } from '../types/plan';
 import type { PlanDraft, PlanDraftItem, TemplateItem } from '../types/template';
 import { savePlan, PlanValidationError } from '../api/plans';
-import { appendExerciseToItems, validatePlanForSave } from '../lib/planDraft';
+import {
+  appendExerciseToItems,
+  estimatePlanDurationSeconds,
+  formatPlanDuration,
+  movePlanItem,
+  validatePlanForSave,
+} from '../lib/planDraft';
 import { patientPlanPath, patientPlanShareUrl } from '../lib/planLink';
 import { errorsByField } from '../lib/templateValidation';
 import { ExercisePicker } from './ExercisePicker';
@@ -56,6 +62,14 @@ export function PlanDraftEditor({ draft, knownExerciseIds, onSaved }: PlanDraftE
     [draft, patientName, items],
   );
 
+  // Live estimated total duration; recomputed on every edit so the summary
+  // reflects dosage/reorder/remove changes immediately.
+  const durationLabel = useMemo(
+    () => formatPlanDuration(estimatePlanDurationSeconds(items)),
+    [items],
+  );
+  const isEmpty = items.length === 0;
+
   const errors = useMemo(
     () => validatePlanForSave(draftToSave, knownExerciseIds),
     [draftToSave, knownExerciseIds],
@@ -76,6 +90,9 @@ export function PlanDraftEditor({ draft, knownExerciseIds, onSaved }: PlanDraftE
 
   const handleItemRemove = (index: number) =>
     setItems((prev) => prev.filter((_, i) => i !== index));
+
+  const handleItemMove = (from: number, to: number) =>
+    setItems((prev) => movePlanItem(prev, from, to));
 
   const handleAddExercise = (exercise: Exercise) =>
     setItems((prev) => appendExerciseToItems(prev, exercise));
@@ -129,6 +146,8 @@ export function PlanDraftEditor({ draft, knownExerciseIds, onSaved }: PlanDraftE
         <h2>{draft.name}</h2>
         <p className="plan-draft-editor__summary" data-testid="plan-draft-summary">
           {items.length} exercise{items.length === 1 ? '' : 's'} in plan
+          {' · est. '}
+          <span data-testid="plan-draft-duration">{durationLabel}</span>
         </p>
       </header>
 
@@ -160,6 +179,28 @@ export function PlanDraftEditor({ draft, knownExerciseIds, onSaved }: PlanDraftE
             items.filter((it) => it.exerciseId === item.exerciseId).length > 1;
           return (
             <div key={index} className="plan-draft-editor__item" data-testid={`plan-item-${index}`}>
+              <div className="plan-draft-editor__reorder" role="group" aria-label={`Reorder item ${index + 1}`}>
+                <button
+                  type="button"
+                  className="plan-draft-editor__move"
+                  aria-label={`Move item ${index + 1} up`}
+                  data-testid={`plan-item-${index}-move-up`}
+                  disabled={index === 0}
+                  onClick={() => handleItemMove(index, index - 1)}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  className="plan-draft-editor__move"
+                  aria-label={`Move item ${index + 1} down`}
+                  data-testid={`plan-item-${index}-move-down`}
+                  disabled={index === items.length - 1}
+                  onClick={() => handleItemMove(index, index + 1)}
+                >
+                  ↓
+                </button>
+              </div>
               <TemplateItemEditor
                 item={item}
                 index={index}
@@ -199,7 +240,7 @@ export function PlanDraftEditor({ draft, knownExerciseIds, onSaved }: PlanDraftE
         type="button"
         className="plan-draft-editor__save"
         data-testid="plan-draft-save"
-        disabled={saving}
+        disabled={saving || isEmpty}
         onClick={handleSave}
       >
         {saving ? 'Saving…' : 'Save plan'}
