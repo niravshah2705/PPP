@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   SessionLoadError,
   SessionSaveError,
+  createSession,
+  finalizeSession,
   fetchProgress,
   fetchSessions,
   patchSessionResults,
@@ -131,5 +133,82 @@ describe('patchSessionResults', () => {
       vi.fn(() => Promise.reject(new Error('offline'))),
     );
     await expect(patchSessionResults('s1', result)).rejects.toBeInstanceOf(SessionSaveError);
+  });
+});
+
+describe('createSession', () => {
+  it('POSTs /api/sessions with the plan/patient + in_progress status', async () => {
+    const fn = mockFetch(
+      () =>
+        new Response(
+          JSON.stringify({ id: 'sess-1', planId: 'p1', status: 'in_progress' }),
+          { status: 201 },
+        ),
+    );
+    const session = await createSession({ planId: 'p1', patientName: 'Jamie' });
+    expect(fn).toHaveBeenCalledWith(
+      '/api/sessions',
+      expect.objectContaining({ method: 'POST' }),
+    );
+    const [, init] = fn.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toEqual({
+      planId: 'p1',
+      patientName: 'Jamie',
+      status: 'in_progress',
+    });
+    expect(session).toMatchObject({ id: 'sess-1', status: 'in_progress' });
+  });
+
+  it('throws SessionSaveError on non-2xx', async () => {
+    mockFetch(() => new Response('boom', { status: 500 }));
+    await expect(createSession({ planId: 'p1' })).rejects.toBeInstanceOf(SessionSaveError);
+  });
+
+  it('throws SessionSaveError on a malformed payload', async () => {
+    mockFetch(() => new Response(JSON.stringify({ nope: true }), { status: 201 }));
+    await expect(createSession({ planId: 'p1' })).rejects.toBeInstanceOf(SessionSaveError);
+  });
+
+  it('wraps network errors as SessionSaveError', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new Error('offline'))),
+    );
+    await expect(createSession({ planId: 'p1' })).rejects.toBeInstanceOf(SessionSaveError);
+  });
+});
+
+describe('finalizeSession', () => {
+  it('PATCHes /api/sessions/:id with status=completed + completedAt', async () => {
+    const fn = mockFetch(() => new Response(null, { status: 204 }));
+    await finalizeSession('sess-1', '2024-05-01T10:00:00.000Z');
+    expect(fn).toHaveBeenCalledWith(
+      '/api/sessions/sess-1',
+      expect.objectContaining({ method: 'PATCH' }),
+    );
+    const [, init] = fn.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toEqual({
+      status: 'completed',
+      completedAt: '2024-05-01T10:00:00.000Z',
+    });
+  });
+
+  it('encodes the session id', async () => {
+    const fn = mockFetch(() => new Response(null, { status: 204 }));
+    await finalizeSession('a/b c', '2024-05-01T10:00:00.000Z');
+    expect(fn).toHaveBeenCalledWith('/api/sessions/a%2Fb%20c', expect.anything());
+  });
+
+  it('throws SessionSaveError on non-2xx', async () => {
+    mockFetch(() => new Response('boom', { status: 500 }));
+    await expect(finalizeSession('sess-1')).rejects.toBeInstanceOf(SessionSaveError);
+  });
+
+  it('wraps network errors as SessionSaveError', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new Error('offline'))),
+    );
+    await expect(finalizeSession('sess-1')).rejects.toBeInstanceOf(SessionSaveError);
   });
 });
