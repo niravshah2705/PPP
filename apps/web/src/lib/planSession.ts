@@ -7,9 +7,18 @@
  * shared by the patient route.
  */
 
-import type { Plan } from '../types/plan';
 import type { Session } from '../types/session';
+import type { PlanDraftItem } from '../types/template';
 import type { SequencerExercise } from './sessionSequencer';
+
+/**
+ * The minimal plan shape the sequencer needs: an ordered list of dosage items.
+ * Both a full {@link Plan} and the patient-facing `SharedPlan` satisfy it, so
+ * this glue is shared without coupling to either concrete schema.
+ */
+interface SequenceablePlan {
+  items: readonly PlanDraftItem[];
+}
 
 /**
  * Map a plan's items to the sequencer's exercise list, in play order.
@@ -19,7 +28,7 @@ import type { SequencerExercise } from './sessionSequencer';
  * `reps` become the set's target and `rest` the between-set rest; the sequencer
  * coerces out-of-range dosage, so no clamping is needed here.
  */
-export function planToSequencerExercises(plan: Plan): SequencerExercise[] {
+export function planToSequencerExercises(plan: SequenceablePlan): SequencerExercise[] {
   return plan.items
     .map((item, index) => ({ item, index }))
     .sort((a, b) => {

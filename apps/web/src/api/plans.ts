@@ -1,4 +1,5 @@
 import type { Plan } from '../types/plan';
+import type { SharedPlan, SharedPlanItem } from '../types/sharedPlan';
 import type { PlanDraft } from '../types/template';
 import {
   errorsByField,
@@ -70,6 +71,26 @@ function assertPlan(data: unknown): Plan {
     !Array.isArray(p.items)
   ) {
     throw new PlanLoadError('Malformed plan payload');
+  }
+  return p;
+}
+
+function assertSharedPlan(data: unknown): SharedPlan {
+  const p = data as SharedPlan;
+  if (
+    !p ||
+    typeof p.id !== 'string' ||
+    typeof p.patientName !== 'string' ||
+    !Array.isArray(p.items) ||
+    !p.items.every(
+      (item: SharedPlanItem) =>
+        item &&
+        typeof item.exerciseId === 'string' &&
+        !!item.exercise &&
+        typeof item.exercise.id === 'string',
+    )
+  ) {
+    throw new PlanLoadError('Malformed shared plan payload');
   }
   return p;
 }
@@ -161,10 +182,10 @@ export async function savePlan(
 }
 
 /**
- * Resolve a single plan via the share endpoint `GET /api/plans/:id` — the same
- * lookup a patient's shareable deep link (`/patient?planId=...`) resolves
- * through, so the doctor builder and the patient view connect on one persisted
- * record.
+ * Resolve a single persisted plan via `GET /api/plans/:id` — the full stored
+ * record (used, e.g., to confirm a saved plan resolves after the doctor save
+ * flow). The patient deep link resolves through {@link fetchSharedPlan} instead,
+ * which returns the trimmed patient-facing payload.
  *
  * - 404 -> {@link PlanNotFoundError}.
  * - other non-2xx / network failure / malformed payload -> {@link PlanLoadError}.
@@ -191,6 +212,45 @@ export async function fetchPlan(id: string, signal?: AbortSignal): Promise<Plan>
   }
 
   return assertPlan(await response.json());
+}
+
+/**
+ * Resolve a plan's patient-facing payload via `GET /api/plans/:id/share` — the
+ * endpoint the shareable deep link (`/patient?planId=...`) resolves through.
+ *
+ * The payload is trimmed to a {@link SharedPlan}: editing-only/internal fields
+ * stripped and each item's exercise expanded inline, so the patient view renders
+ * the plan overview and runs the session purely from this response without any
+ * further calls.
+ *
+ * - 404 -> {@link PlanNotFoundError} (surfaced by the patient empty state).
+ * - other non-2xx / network failure / malformed payload -> {@link PlanLoadError}.
+ */
+export async function fetchSharedPlan(
+  id: string,
+  signal?: AbortSignal,
+): Promise<SharedPlan> {
+  const encoded = encodeURIComponent(id);
+  let response: Response;
+  try {
+    response = await fetch(`/api/plans/${encoded}/share`, {
+      headers: { Accept: 'application/json' },
+      signal,
+    });
+  } catch (err) {
+    throw new PlanLoadError(
+      err instanceof Error ? err.message : 'Network error while loading shared plan',
+    );
+  }
+
+  if (response.status === 404) {
+    throw new PlanNotFoundError(id);
+  }
+  if (!response.ok) {
+    throw new PlanLoadError(`Failed to load shared plan (HTTP ${response.status})`);
+  }
+
+  return assertSharedPlan(await response.json());
 }
 
 /**
