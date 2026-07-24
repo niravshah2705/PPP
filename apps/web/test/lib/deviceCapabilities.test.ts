@@ -4,6 +4,7 @@ import {
   classifyCameraError,
   detectWebXRSupport,
   requestCamera,
+  requestImmersiveSession,
 } from '../../src/lib/deviceCapabilities';
 
 afterEach(() => {
@@ -90,6 +91,48 @@ describe('detectWebXRSupport', () => {
   it('returns false when the support check rejects', async () => {
     stubNavigator({ xr: { isSessionSupported: vi.fn(() => Promise.reject(new Error('x'))) } });
     await expect(detectWebXRSupport()).resolves.toBe(false);
+  });
+});
+
+describe('requestImmersiveSession', () => {
+  it('returns "started" with the session when requestSession resolves', async () => {
+    const session = { id: 'xr-session' };
+    const requestSession = vi.fn(() => Promise.resolve(session));
+    stubNavigator({ xr: { isSessionSupported: vi.fn(), requestSession } });
+    const result = await requestImmersiveSession();
+    expect(result.status).toBe('started');
+    expect(result.session).toBe(session);
+    expect(requestSession).toHaveBeenCalledWith('immersive-vr', {
+      optionalFeatures: ['local-floor', 'bounded-floor'],
+    });
+  });
+
+  it('forwards a custom mode and options', async () => {
+    const requestSession = vi.fn(() => Promise.resolve({}));
+    stubNavigator({ xr: { requestSession } });
+    await requestImmersiveSession('immersive-ar', { requiredFeatures: ['hit-test'] });
+    expect(requestSession).toHaveBeenCalledWith('immersive-ar', {
+      requiredFeatures: ['hit-test'],
+    });
+  });
+
+  it('returns "unsupported" when navigator.xr is absent', async () => {
+    stubNavigator({});
+    expect((await requestImmersiveSession()).status).toBe('unsupported');
+  });
+
+  it('returns "unsupported" when requestSession is not a function', async () => {
+    stubNavigator({ xr: { isSessionSupported: vi.fn() } });
+    expect((await requestImmersiveSession()).status).toBe('unsupported');
+  });
+
+  it('returns "rejected" when the device refuses the session', async () => {
+    stubNavigator({
+      xr: { requestSession: vi.fn(() => Promise.reject(new Error('no headset'))) },
+    });
+    const result = await requestImmersiveSession();
+    expect(result.status).toBe('rejected');
+    expect(result.session).toBeUndefined();
   });
 });
 

@@ -53,3 +53,24 @@
   display: flex;
   gap: 0.5rem;
 }
+
+.exercise-scene__vr {
+  pointer-events: auto;
+  align-self: flex-start;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.exercise-scene__enter-vr[disabled] {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.exercise-scene__vr-error {
+  margin: 0;
+  max-width: 22rem;
+  font-size: 0.85rem;
+  color: #b91c1c;
+}

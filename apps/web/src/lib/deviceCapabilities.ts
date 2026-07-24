@@ -36,6 +36,22 @@ export interface CameraProbeResult {
 /** Minimal shape of the WebXR entry point we rely on (avoids @types/webxr). */
 interface XrSystemLike {
   isSessionSupported(mode: string): Promise<boolean>;
+  requestSession?(mode: string, options?: unknown): Promise<unknown>;
+}
+
+/**
+ * Outcome of trying to open an immersive WebXR session.
+ *
+ * - `started`     — the session was granted; `session` is the live XRSession.
+ * - `unsupported` — `navigator.xr.requestSession` is unavailable on this device.
+ * - `rejected`    — the browser/device refused (e.g. no headset, denied, in use).
+ */
+export type ImmersiveSessionStatus = 'started' | 'unsupported' | 'rejected';
+
+export interface ImmersiveSessionResult {
+  status: ImmersiveSessionStatus;
+  /** The live session — present only when `status === 'started'`. */
+  session?: unknown;
 }
 
 /**
@@ -98,6 +114,34 @@ export async function detectWebXRSupport(
     return await xr.isSessionSupported(mode);
   } catch {
     return false;
+  }
+}
+
+/** Default features requested for an immersive session (best-effort, optional). */
+const DEFAULT_XR_SESSION_INIT = {
+  optionalFeatures: ['local-floor', 'bounded-floor'],
+};
+
+/**
+ * Request an immersive WebXR session and classify the outcome.
+ *
+ * Never throws: an absent `navigator.xr.requestSession` maps to `unsupported`
+ * and any rejection (no headset, denied, session already active) maps to
+ * `rejected`, so callers can keep the inline 3D demo running instead of
+ * handling raw exceptions. Callers hand the returned `session` to
+ * `renderer.xr.setSession(...)` to begin presenting.
+ */
+export async function requestImmersiveSession(
+  mode: string = 'immersive-vr',
+  options: unknown = DEFAULT_XR_SESSION_INIT,
+): Promise<ImmersiveSessionResult> {
+  const xr = (globalThis.navigator as (Navigator & { xr?: XrSystemLike }) | undefined)?.xr;
+  if (!xr || typeof xr.requestSession !== 'function') return { status: 'unsupported' };
+  try {
+    const session = await xr.requestSession(mode, options);
+    return { status: 'started', session };
+  } catch {
+    return { status: 'rejected' };
   }
 }
 
