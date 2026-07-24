@@ -74,6 +74,12 @@ export interface Exercise {
   /** URL of a small preview image shown alongside the exercise in the picker. */
   thumbnailUrl?: string;
   /**
+   * Reference to the exercise's demo media clip (id or URL). Joined into template
+   * previews so the client can render media without a second lookup; also used as
+   * a thumbnail fallback when no dedicated `thumbnailUrl` is set.
+   */
+  demoMediaRef?: string;
+  /**
    * Rep-counter tracking config. Present for exercises that support automatic
    * pose-driven rep counting / hold timing; absent for demo-only entries.
    */
