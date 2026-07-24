@@ -5,6 +5,7 @@ import { DoctorPreviewPage } from './routes/DoctorPreviewPage';
 import { DoctorSessionReviewPage } from './routes/DoctorSessionReviewPage';
 import { TemplatesPage } from './routes/TemplatesPage';
 import { PlansPage } from './routes/PlansPage';
+import { PatientPlanPage } from './routes/PatientPlanPage';
 
 export function App() {
   return (
@@ -13,6 +14,8 @@ export function App() {
       <Route path="/embed/exercise/:id" element={<EmbedExercise />} />
       {/* Full session player (reuses the same scene component). */}
       <Route path="/exercise/:id" element={<ExercisePlayer />} />
+      {/* Patient plan player: start/resume a session and record results as the patient progresses. */}
+      <Route path="/patient" element={<PatientPlanPage />} />
       {/* Doctor template preview embeds the demo route via iframe. */}
       <Route path="/doctor/preview/:id" element={<DoctorPreviewPage />} />
       {/* Doctor session-review dashboard for a plan. */}
