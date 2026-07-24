@@ -152,6 +152,38 @@ Covered by `test/api/sessions.test.ts`, `test/lib/sessionRecorder.test.ts`,
 `test/lib/planSession.test.ts`, `test/hooks/useSessionRecorder.test.ts`, and the
 `test/components/PatientPlanPlayer.test.tsx` start→record→retry→finalise flow.
 
+## Load & display assigned plan for a patient (NIR-765)
+
+The patient's entry point is _reading_ the plan the doctor assigned, so
+**`/patient`** first shows a read-only overview before any session starts.
+
+- **Two ways in.** [`usePatientPlan`](src/hooks/usePatientPlan.ts) resolves the
+  plan from the URL: a `?planId=` loads that plan's share payload directly
+  (`GET /api/plans/:id/share`), or a `?patientName=` resolves the patient's
+  **most recent** plan via [`fetchMostRecentPlanIdForPatient`](src/api/plans.ts)
+  (`GET /api/plans?patientName=` → newest by `updatedAt`, exact-match only via
+  the pure [`mostRecentPlanForPatient`](src/lib/planList.ts)) and then loads it.
+- **Read-only overview.** [`PlanOverview`](src/components/PlanOverview.tsx)
+  renders the patient name, each exercise with its `sets × reps/hold` target and
+  a guidance note, the **estimated total duration**, and a single **Start**
+  button. The presentation-only model is built by the pure
+  [`buildPlanOverview`](src/lib/planOverview.ts); duration is derived from every
+  item's sets/reps/hold/rest via the shared
+  [`estimatePlanDurationSeconds`](src/lib/planDraft.ts), so the patient overview
+  and doctor builder always agree.
+- **Start hands off.** Pressing Start mounts the
+  [`PatientPlanPlayer`](src/components/PatientPlanPlayer.tsx) with `autoStart`, so
+  the session begins without a second click — while an in-progress session still
+  surfaces the resume prompt for the patient to decide.
+- **Never a dead end.** A missing/blank identifier, an unknown `planId`, or a
+  patient with no plan renders a friendly empty state (not a crash); a plan with
+  zero exercises shows a clear "no exercises assigned" message instead of a Start
+  button that does nothing.
+
+Covered by `test/lib/planOverview.test.ts`, `test/lib/planList.test.ts`,
+`test/api/plans.test.ts`, `test/components/PlanOverview.test.tsx`, and the
+`test/routes/PatientPlanPage.test.tsx` resolution + empty-state flows.
+
 ## Patient context selector (NIR-759)
 
 With no authentication, every plan must still be tied to a patient, so the doctor

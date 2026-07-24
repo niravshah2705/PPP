@@ -25,6 +25,14 @@ export interface PatientPlanPlayerProps {
   transport?: RecorderTransport;
   /** Recorder debounce window; tests pass 0 to flush synchronously. */
   recorderDebounceMs?: number;
+  /**
+   * When true, begin the session automatically once the plan is ready and no
+   * in-progress session needs a resume decision. Used by the patient overview
+   * (NIR-765), whose own Start button is the deliberate action — so the player
+   * shouldn't ask the patient to press Start a second time. An in-progress
+   * session still surfaces the resume prompt so the patient chooses.
+   */
+  autoStart?: boolean;
 }
 
 /**
@@ -46,6 +54,7 @@ export function PatientPlanPlayer({
   startSession = createSession,
   transport,
   recorderDebounceMs,
+  autoStart = false,
 }: PatientPlanPlayerProps) {
   const exercises = useMemo<SequencerExercise[]>(
     () => planToSequencerExercises(plan),
@@ -101,6 +110,18 @@ export function PatientPlanPlayer({
     setPhase('active');
   }, [resumable]);
 
+  // Auto-start once the plan resolves to a fresh start (no resume decision
+  // pending). Guarded by a ref so a failed start surfaces its error without
+  // looping — the patient can retry with the button below.
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (!autoStart) return;
+    if (phase === 'idle' && !starting && !sessionId && !autoStartedRef.current) {
+      autoStartedRef.current = true;
+      void start();
+    }
+  }, [autoStart, phase, starting, sessionId, start]);
+
   if (exercises.length === 0) {
     return (
       <InlineErrorCard
@@ -149,7 +170,29 @@ export function PatientPlanPlayer({
         </div>
       )}
 
-      {phase === 'idle' && (
+      {phase === 'idle' && autoStart && (
+        <div className="patient-plan__start" data-testid="start-panel">
+          {startError ? (
+            <>
+              <p className="patient-plan__error" role="alert" data-testid="start-error">
+                {startError}
+              </p>
+              <button
+                type="button"
+                data-testid="start-session-button"
+                onClick={start}
+                disabled={starting}
+              >
+                {starting ? 'Starting…' : 'Try again'}
+              </button>
+            </>
+          ) : (
+            <p data-testid="auto-starting">Starting your session…</p>
+          )}
+        </div>
+      )}
+
+      {phase === 'idle' && !autoStart && (
         <div className="patient-plan__start" data-testid="start-panel">
           <p>{exercises.length} exercise{exercises.length === 1 ? '' : 's'} ready.</p>
           <button
