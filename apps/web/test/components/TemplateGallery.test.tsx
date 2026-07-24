@@ -31,7 +31,12 @@ describe('TemplateGallery', () => {
     expect(screen.getByTestId('template-gallery-empty')).toBeInTheDocument();
   });
 
-  it('instantiates a plan draft via the template-to-draft flow on "Use template"', async () => {
+  it('labels the instantiate action "Use this template"', () => {
+    render(<TemplateGallery templates={templates} />);
+    expect(screen.getByTestId('template-use-t1')).toHaveTextContent('Use this template');
+  });
+
+  it('instantiates a plan draft via the template-to-draft flow on "Use this template"', async () => {
     const user = userEvent.setup();
     const onUse = vi.fn<(draft: PlanDraft) => void>();
     render(<TemplateGallery templates={templates} onUse={onUse} />);
@@ -41,7 +46,18 @@ describe('TemplateGallery', () => {
     expect(onUse).toHaveBeenCalledTimes(1);
     const draft = onUse.mock.calls[0][0];
     expect(draft.templateId).toBe('t1');
+    expect(draft.sourceTemplateId).toBe('t1');
     expect(draft.items).toEqual(templates[0].items);
+  });
+
+  it('binds the instantiated draft to the current patient', async () => {
+    const user = userEvent.setup();
+    const onUse = vi.fn<(draft: PlanDraft) => void>();
+    render(<TemplateGallery templates={templates} currentPatientName="Ada Lovelace" onUse={onUse} />);
+
+    await user.click(screen.getByTestId('template-use-t1'));
+
+    expect(onUse.mock.calls[0][0].patientName).toBe('Ada Lovelace');
   });
 
   it('requests editing a template on "Edit"', async () => {

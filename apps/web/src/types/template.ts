@@ -75,8 +75,20 @@ export interface PlanDraft {
    * creates a new plan rather than overwriting the source.
    */
   id?: string;
-  /** Id of the template this draft was instantiated from, if any. */
+  /**
+   * Id of the template this draft was instantiated from, if any. This is the
+   * field that flows to the server on save (and drives the manage-view search),
+   * so it is what "save and share" resolve provenance through.
+   */
   templateId?: string;
+  /**
+   * Explicit provenance recorded by the "Use this template" flow: the id of the
+   * template whose expanded items seeded this draft. Kept in sync with
+   * {@link templateId} (they hold the same value) — `sourceTemplateId` names the
+   * origin of the *draft*, while `templateId` is the persistence/link field the
+   * API and manage view consume. Absent for drafts not seeded from a template.
+   */
+  sourceTemplateId?: string;
   /**
    * Name of the source template, kept for display provenance in the builder.
    */

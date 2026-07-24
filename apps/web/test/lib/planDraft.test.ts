@@ -6,13 +6,14 @@ import {
   estimatePlanDurationSeconds,
   formatPlanDuration,
   isExerciseInDraft,
+  mergePlanDrafts,
   movePlanItem,
   nextPlanOrder,
   normalizePlanOrder,
   validatePlanDraft,
 } from '../../src/lib/planDraft';
 import type { Exercise } from '../../src/types/exercise';
-import type { PlanDraftItem } from '../../src/types/template';
+import type { PlanDraft, PlanDraftItem } from '../../src/types/template';
 
 const exercise: Exercise = { id: 'knee-3', name: 'Wall Squat', category: 'knee' };
 
@@ -123,6 +124,53 @@ describe('estimate duration', () => {
     expect(formatPlanDuration(45)).toBe('45s');
     expect(formatPlanDuration(165)).toBe('2m 45s');
     expect(formatPlanDuration(300)).toBe('5m 0s');
+  });
+});
+
+describe('mergePlanDrafts', () => {
+  const base: PlanDraft = {
+    sourceTemplateId: 't1',
+    templateId: 't1',
+    templateName: 'Knee rehab',
+    name: 'Knee rehab',
+    patientName: 'Ada Lovelace',
+    items: [{ exerciseId: 'knee-1', sets: 3, reps: 10, hold: 5, rest: 30 }],
+  };
+  const incoming: PlanDraft = {
+    sourceTemplateId: 't2',
+    templateId: 't2',
+    templateName: 'Shoulder mobility',
+    name: 'Shoulder mobility',
+    items: [
+      { exerciseId: 'sh-1', sets: 2, reps: 12, hold: 0, rest: 20 },
+      { exerciseId: 'sh-2', sets: 1, reps: 15, hold: 0, rest: 15 },
+    ],
+  };
+
+  it("appends the incoming template's items after the current ones", () => {
+    const merged = mergePlanDrafts(base, incoming);
+    expect(merged.items.map((i) => i.exerciseId)).toEqual(['knee-1', 'sh-1', 'sh-2']);
+  });
+
+  it('re-keys the combined items to a gap-free 0..n-1 order', () => {
+    const merged = mergePlanDrafts(base, incoming);
+    expect(merged.items.map((i) => i.order)).toEqual([0, 1, 2]);
+  });
+
+  it('preserves the base draft identity and provenance', () => {
+    const merged = mergePlanDrafts(base, incoming);
+    expect(merged.name).toBe('Knee rehab');
+    expect(merged.sourceTemplateId).toBe('t1');
+    expect(merged.templateId).toBe('t1');
+    expect(merged.templateName).toBe('Knee rehab');
+    expect(merged.patientName).toBe('Ada Lovelace');
+  });
+
+  it('does not mutate either input', () => {
+    mergePlanDrafts(base, incoming);
+    expect(base.items).toHaveLength(1);
+    expect(incoming.items).toHaveLength(2);
+    expect(base.items[0].order).toBeUndefined();
   });
 });
 
