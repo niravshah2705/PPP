@@ -4,6 +4,7 @@ import {
   PlanLoadError,
   PlanNotFoundError,
   PlanValidationError,
+  fetchMostRecentPlanIdForPatient,
   fetchPlan,
   fetchPlans,
   fetchSharedPlan,
@@ -217,5 +218,51 @@ describe('fetchSharedPlan (GET /api/plans/:id/share)', () => {
       vi.fn(() => Promise.reject(new Error('offline'))),
     );
     await expect(fetchSharedPlan('p1')).rejects.toBeInstanceOf(PlanLoadError);
+  });
+});
+
+describe('fetchMostRecentPlanIdForPatient', () => {
+  const ada = (over: Partial<(typeof onePlan)[number]> = {}) => ({
+    id: 'ada-old',
+    patientName: 'Ada Lovelace',
+    templateName: 'Knee rehab',
+    items: [{ exerciseId: 'a', sets: 3, reps: 10, hold: 0, rest: 30 }],
+    updatedAt: '2024-01-01T10:00:00Z',
+    ...over,
+  });
+
+  it('queries GET /api/plans?patientName= and returns the newest matching plan id', async () => {
+    const fn = mockFetch(() =>
+      new Response(
+        JSON.stringify([ada(), ada({ id: 'ada-new', updatedAt: '2024-06-01T10:00:00Z' })]),
+        { status: 200 },
+      ),
+    );
+    await expect(fetchMostRecentPlanIdForPatient('Ada Lovelace')).resolves.toBe('ada-new');
+    expect(fn).toHaveBeenCalledWith(
+      '/api/plans?patientName=Ada+Lovelace',
+      expect.anything(),
+    );
+  });
+
+  it('returns null for a blank name without calling the API', async () => {
+    const fn = mockFetch(() => new Response('[]', { status: 200 }));
+    await expect(fetchMostRecentPlanIdForPatient('   ')).resolves.toBeNull();
+    expect(fn).not.toHaveBeenCalled();
+  });
+
+  it('returns null when no plan matches the patient', async () => {
+    mockFetch(() => new Response(JSON.stringify([ada({ patientName: 'Someone Else' })]), { status: 200 }));
+    await expect(fetchMostRecentPlanIdForPatient('Ada Lovelace')).resolves.toBeNull();
+  });
+
+  it('returns null on a non-array payload', async () => {
+    mockFetch(() => new Response(JSON.stringify({ nope: true }), { status: 200 }));
+    await expect(fetchMostRecentPlanIdForPatient('Ada Lovelace')).resolves.toBeNull();
+  });
+
+  it('throws PlanLoadError on a non-2xx response', async () => {
+    mockFetch(() => new Response('boom', { status: 500 }));
+    await expect(fetchMostRecentPlanIdForPatient('Ada Lovelace')).rejects.toBeInstanceOf(PlanLoadError);
   });
 });

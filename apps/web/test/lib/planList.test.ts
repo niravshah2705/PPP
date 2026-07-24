@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   duplicatePlanToDraft,
   filterPlansByQuery,
+  mostRecentPlanForPatient,
   planToEditDraft,
   sortPlansByUpdatedAt,
 } from '../../src/lib/planList';
@@ -33,6 +34,32 @@ describe('sortPlansByUpdatedAt', () => {
     const good = plan({ id: 'good', updatedAt: '2024-05-01T00:00:00Z' });
     const bad = plan({ id: 'bad', updatedAt: 'not-a-date' });
     expect(sortPlansByUpdatedAt([bad, good]).map((p) => p.id)).toEqual(['good', 'bad']);
+  });
+});
+
+describe('mostRecentPlanForPatient', () => {
+  const adaOld = plan({ id: 'ada-old', patientName: 'Ada Lovelace', updatedAt: '2024-01-01T00:00:00Z' });
+  const adaNew = plan({ id: 'ada-new', patientName: 'Ada Lovelace', updatedAt: '2024-06-01T00:00:00Z' });
+  const grace = plan({ id: 'grace', patientName: 'Grace Hopper', updatedAt: '2024-07-01T00:00:00Z' });
+
+  it('returns the newest plan for the exact patient', () => {
+    expect(mostRecentPlanForPatient([adaOld, grace, adaNew], 'Ada Lovelace')?.id).toBe('ada-new');
+  });
+
+  it('matches the patient name case-insensitively and trims the query', () => {
+    expect(mostRecentPlanForPatient([adaOld, adaNew], '  ada lovelace ')?.id).toBe('ada-new');
+  });
+
+  it('never matches on a blank query', () => {
+    expect(mostRecentPlanForPatient([adaOld, adaNew], '   ')).toBeNull();
+  });
+
+  it('returns null when no plan matches the patient', () => {
+    expect(mostRecentPlanForPatient([adaOld, adaNew], 'Nobody')).toBeNull();
+  });
+
+  it('does not match a partial/substring name (avoids opening the wrong patient)', () => {
+    expect(mostRecentPlanForPatient([adaOld, adaNew], 'Ada')).toBeNull();
   });
 });
 
