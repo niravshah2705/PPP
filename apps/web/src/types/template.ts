@@ -55,6 +55,12 @@ export interface PlanDraftItem {
   reps: number;
   hold: number;
   rest: number;
+  /**
+   * Position of the item within the draft. Items instantiated from a template
+   * are ordered by array position; extra exercises appended from the library
+   * carry an explicit next-order value (see `nextPlanOrder`).
+   */
+  order?: number;
 }
 
 /**

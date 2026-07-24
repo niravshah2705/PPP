@@ -1,0 +1,96 @@
+.exercise-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.exercise-picker__search {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.exercise-picker__search input {
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.exercise-picker__status,
+.exercise-picker__empty {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.exercise-picker__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.exercise-picker__option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.exercise-picker__option:hover {
+  border-color: #a5b4fc;
+  background: #f5f3ff;
+}
+
+.exercise-picker__thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.exercise-picker__thumb--empty {
+  background: #eef2ff;
+}
+
+.exercise-picker__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.exercise-picker__name {
+  font-size: 14px;
+}
+
+.exercise-picker__tag {
+  align-self: flex-start;
+  background: #eef2ff;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: #4338ca;
+}
+
+.exercise-picker__badge {
+  flex: 0 0 auto;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+}

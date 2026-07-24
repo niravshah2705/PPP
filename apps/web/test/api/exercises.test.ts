@@ -3,6 +3,7 @@ import {
   ExerciseLoadError,
   ExerciseNotFoundError,
   fetchExercise,
+  listExercises,
 } from '../../src/api/exercises';
 
 function mockFetch(impl: (url: string) => Response | Promise<Response>) {
@@ -54,5 +55,41 @@ describe('fetchExercise', () => {
       vi.fn(() => Promise.reject(new Error('offline'))),
     );
     await expect(fetchExercise('x')).rejects.toBeInstanceOf(ExerciseLoadError);
+  });
+});
+
+describe('listExercises', () => {
+  it('calls GET /api/exercises and returns the library', async () => {
+    const library = [
+      { id: 'knee-1', name: 'Knee Raise', category: 'knee' },
+      { id: 'sh-1', name: 'Shoulder Press', category: 'shoulder' },
+    ];
+    const fn = mockFetch(() => new Response(JSON.stringify(library), { status: 200 }));
+    const result = await listExercises();
+    expect(fn).toHaveBeenCalledWith('/api/exercises', expect.anything());
+    expect(result).toEqual(library);
+  });
+
+  it('throws ExerciseLoadError on 500', async () => {
+    mockFetch(() => new Response('boom', { status: 500 }));
+    await expect(listExercises()).rejects.toBeInstanceOf(ExerciseLoadError);
+  });
+
+  it('throws ExerciseLoadError when the payload is not an array', async () => {
+    mockFetch(() => new Response(JSON.stringify({ nope: true }), { status: 200 }));
+    await expect(listExercises()).rejects.toBeInstanceOf(ExerciseLoadError);
+  });
+
+  it('throws ExerciseLoadError when an entry is malformed', async () => {
+    mockFetch(() => new Response(JSON.stringify([{ name: 'no id' }]), { status: 200 }));
+    await expect(listExercises()).rejects.toBeInstanceOf(ExerciseLoadError);
+  });
+
+  it('wraps network errors as ExerciseLoadError', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new Error('offline'))),
+    );
+    await expect(listExercises()).rejects.toBeInstanceOf(ExerciseLoadError);
   });
 });

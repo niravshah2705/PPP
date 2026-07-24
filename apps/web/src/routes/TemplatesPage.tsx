@@ -3,6 +3,7 @@ import type { PlanDraft, Template } from '../types/template';
 import { listTemplates } from '../api/templates';
 import { TemplateEditor } from '../components/TemplateEditor';
 import { TemplateGallery } from '../components/TemplateGallery';
+import { PlanDraftEditor } from '../components/PlanDraftEditor';
 
 type Mode = { kind: 'gallery' } | { kind: 'create' } | { kind: 'edit'; template: Template };
 
@@ -78,10 +79,13 @@ export function TemplatesPage() {
             />
           )}
           {draft && (
-            <p data-testid="instantiated-draft">
-              Started a plan draft from “{draft.name}” with {draft.items.length} exercise
-              {draft.items.length === 1 ? '' : 's'}.
-            </p>
+            <>
+              <p data-testid="instantiated-draft">
+                Started a plan draft from “{draft.name}” with {draft.items.length} exercise
+                {draft.items.length === 1 ? '' : 's'}.
+              </p>
+              <PlanDraftEditor key={draft.templateId ?? draft.name} draft={draft} />
+            </>
           )}
         </>
       )}

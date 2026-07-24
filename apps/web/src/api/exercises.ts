@@ -49,3 +49,39 @@ export async function fetchExercise(id: string, signal?: AbortSignal): Promise<E
   }
   return data;
 }
+
+/**
+ * List the exercise library via `GET /api/exercises` — the source the
+ * add-exercise picker searches/filters over.
+ *
+ * - non-2xx / network failure -> {@link ExerciseLoadError}.
+ * - a non-array payload (or malformed entries) -> {@link ExerciseLoadError}.
+ */
+export async function listExercises(signal?: AbortSignal): Promise<Exercise[]> {
+  let response: Response;
+  try {
+    response = await fetch('/api/exercises', {
+      headers: { Accept: 'application/json' },
+      signal,
+    });
+  } catch (err) {
+    throw new ExerciseLoadError(
+      err instanceof Error ? err.message : 'Network error while loading exercises',
+    );
+  }
+
+  if (!response.ok) {
+    throw new ExerciseLoadError(`Failed to load exercises (HTTP ${response.status})`);
+  }
+
+  const data = (await response.json()) as unknown;
+  if (!Array.isArray(data)) {
+    throw new ExerciseLoadError('Malformed exercises payload');
+  }
+  return data.map((entry) => {
+    if (!entry || typeof (entry as Exercise).id !== 'string') {
+      throw new ExerciseLoadError('Malformed exercise payload');
+    }
+    return entry as Exercise;
+  });
+}
