@@ -1,6 +1,12 @@
-/** Canonical patient-facing path for starting a plan. Single source of truth. */
+/**
+ * Canonical patient-facing route for opening a plan — the single source of
+ * truth every "share with patient" surface (save confirmation, plan list copy,
+ * empty-session prompt) resolves through, so the doctor and patient views always
+ * connect on the same persisted plan. The plan id travels as a `planId` query
+ * param (`/patient?planId=...`), which is exactly how the patient view reads it.
+ */
 export function patientPlanPath(planId: string): string {
-  return `/plan/${encodeURIComponent(planId)}`;
+  return `/patient?planId=${encodeURIComponent(planId)}`;
 }
 
 /**

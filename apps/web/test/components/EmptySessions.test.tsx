@@ -12,6 +12,6 @@ describe('EmptySessions', () => {
   it('surfaces the shareable plan link pointing at the patient plan path', () => {
     render(<EmptySessions planId="plan-42" />);
     const link = screen.getByTestId('empty-plan-link') as HTMLAnchorElement;
-    expect(link.getAttribute('href')).toContain('/plan/plan-42');
+    expect(link.getAttribute('href')).toContain('/patient?planId=plan-42');
   });
 });

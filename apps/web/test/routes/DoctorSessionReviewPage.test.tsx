@@ -99,7 +99,7 @@ describe('DoctorSessionReviewPage', () => {
     stubApi([], { planId: 'p1', series: [] });
     renderAt('p1');
     await waitFor(() => expect(screen.getByTestId('empty-sessions')).toBeInTheDocument());
-    expect(screen.getByTestId('empty-plan-link').getAttribute('href')).toContain('/plan/p1');
+    expect(screen.getByTestId('empty-plan-link').getAttribute('href')).toContain('/patient?planId=p1');
   });
 
   it('shows an error card when the sessions request fails', async () => {

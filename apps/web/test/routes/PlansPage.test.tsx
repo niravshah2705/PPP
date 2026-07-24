@@ -153,7 +153,7 @@ describe('PlansPage', () => {
 
     await userEvent.click(screen.getByTestId('plan-copy-ada'));
 
-    expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/plan/ada`);
+    expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/patient?planId=ada`);
     await waitFor(() =>
       expect(screen.getByTestId('plan-copy-ada')).toHaveTextContent('Copied!'),
     );
