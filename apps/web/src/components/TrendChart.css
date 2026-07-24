@@ -1,0 +1,60 @@
+.trend-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.trend-chart__svg {
+  width: 100%;
+  height: 120px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+}
+
+.trend-chart__line {
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.trend-chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: 12px/1.4 system-ui, sans-serif;
+  color: #475569;
+}
+
+.trend-chart__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.trend-chart__swatch {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 2px;
+}
+
+.trend-chart__legend-missing {
+  color: #94a3b8;
+}
+
+.trend-chart--empty {
+  padding: 1rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 0.5rem;
+  background: #f8fafc;
+}
+
+.trend-chart__empty-note {
+  margin: 0;
+  color: #64748b;
+  font: 13px/1.5 system-ui, sans-serif;
+  text-align: center;
+}

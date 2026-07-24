@@ -1,0 +1,48 @@
+.session-review {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+  font: 14px/1.5 system-ui, sans-serif;
+  color: #0f172a;
+}
+
+.session-review__title {
+  margin: 0 0 1rem;
+  font-size: 1.4rem;
+}
+
+.session-review__loading {
+  color: #64748b;
+}
+
+.session-review__body {
+  display: grid;
+  grid-template-columns: minmax(16rem, 22rem) 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 40rem) {
+  .session-review__body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.session-review__detail-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.session-review__trend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.session-review__subhead {
+  margin: 0;
+  font-size: 1rem;
+  color: #334155;
+}
