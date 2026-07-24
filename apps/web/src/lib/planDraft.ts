@@ -81,3 +81,23 @@ export function validatePlanDraft(
 
   return errors;
 }
+
+/**
+ * Validate a plan draft for saving. Extends {@link validatePlanDraft} with the
+ * hand-off rule that a plan must be assigned to a patient before it can be
+ * persisted, so a draft is never saved without a recipient. Returns field-keyed
+ * errors (empty means safe to persist); nothing is mutated.
+ */
+export function validatePlanForSave(
+  draft: PlanDraft,
+  knownExerciseIds?: ReadonlySet<string>,
+): FieldError[] {
+  const errors = validatePlanDraft(draft, knownExerciseIds);
+
+  const patient = typeof draft.patientName === 'string' ? draft.patientName.trim() : '';
+  if (!patient) {
+    errors.push({ field: 'patientName', message: 'Assign a patient' });
+  }
+
+  return errors;
+}
