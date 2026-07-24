@@ -134,3 +134,62 @@ export interface PatientProgressReport {
    */
   adherencePct: number | null;
 }
+
+/**
+ * Lifecycle of a persisted session record as the write APIs see it.
+ *
+ * - `in_progress` — created by `POST /api/sessions`; results are still being
+ *   appended via PATCH.
+ * - `completed`   — finalised by a PATCH that set `completedAt`; terminal.
+ * - `abandoned`   — the patient stopped early; a PATCH may finalise it with
+ *   partial results. Terminal.
+ */
+export type SessionRecordStatus = 'in_progress' | 'completed' | 'abandoned';
+
+/**
+ * One exercise's recorded result inside a {@link SessionRecord}.
+ *
+ * This is the authoritative per-exercise shape the write APIs persist (distinct
+ * from {@link ExerciseResult}, the review dashboard's read projection). Numeric
+ * fields are normalised by the store: `avgFormScore` is clamped to 0–100 and the
+ * counts/measurements are clamped to be non-negative.
+ */
+export interface SessionResult {
+  /** Stable exercise id (matches the plan/exercise catalogue); the merge key. */
+  exerciseId: string;
+  /** Reps the plan asked for (>= 0). */
+  targetReps: number;
+  /** Reps the patient actually completed (>= 0). */
+  completedReps: number;
+  /** Average form score for this exercise, clamped to 0–100. */
+  avgFormScore: number;
+  /** Best range-of-motion (degrees) reached this exercise (>= 0). */
+  maxRangeOfMotionDeg: number;
+  /** Wall-clock seconds spent on this exercise (>= 0). */
+  durationSeconds: number;
+}
+
+/**
+ * The authoritative persisted session, as returned by `GET /api/sessions/:id`
+ * and `GET /api/sessions?planId=` and written by `POST`/`PATCH /api/sessions`.
+ *
+ * The server owns the lifecycle timestamps: `startedAt` is set on create and
+ * `completedAt` only once the session is finalised (`completed`/`abandoned`).
+ * `results` are merged per `exerciseId` across PATCH calls.
+ */
+export interface SessionRecord {
+  /** Server-assigned id. */
+  id: string;
+  /** Plan the session belongs to (validated to exist on create). */
+  planId: string;
+  /** Patient the session is for. */
+  patientName: string;
+  /** ISO-8601 timestamp the session was opened; server-set on create. */
+  startedAt: string;
+  /** ISO-8601 timestamp the session was finalised; absent while in progress. */
+  completedAt?: string;
+  /** Lifecycle status. */
+  status: SessionRecordStatus;
+  /** Per-exercise results, merged by `exerciseId`. */
+  results: SessionResult[];
+}
