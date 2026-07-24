@@ -83,6 +83,36 @@ Covered by `test/components/PlanDraftEditor.test.tsx`, `test/api/plans.test.ts`,
 `test/lib/planLink.test.ts`, and the `test/e2e/doctorPlanBuilder.e2e.test.tsx`
 hand-off flow.
 
+## Patient context selector (NIR-759)
+
+With no authentication, every plan must still be tied to a patient, so the doctor
+picks one _before_ building anything. A single header control
+([`PatientContextSelector`](src/components/PatientContextSelector.tsx), mounted in
+[`AppHeader`](src/components/AppHeader.tsx)) owns that choice:
+
+- **Shared store + URL.** [`PatientProvider`](src/context/PatientContext.tsx) holds
+  the working `patientName` in React state (so it survives client-side route
+  changes) and mirrors it into the `?patient=` query of the active URL (so a hard
+  refresh or deep link restores it). `usePatientContext` reads it; downstream
+  builders read it through the same context.
+- **Typeahead of previous patients.** The selector suggests distinct,
+  previously-used names via [`fetchPatientNameSuggestions`](src/api/plans.ts)
+  (`GET /api/plans?patientName=<query>`), debounced through
+  [`usePatientSuggestions`](src/hooks/usePatientSuggestions.ts) and reduced with
+  the pure [`distinctPatientNames`/`filterPatientSuggestions`](src/lib/patientSuggestions.ts).
+- **Gated builder actions.** [`PlanDraftEditor`](src/components/PlanDraftEditor.tsx)
+  reads the patient from context: with none set (including an empty or
+  whitespace-only name) the save/assign action is **disabled** with an inline hint
+  explaining why. Opening a plan for edit adopts that plan's patient; duplicating
+  clears it for reassignment.
+- **No silent context loss.** Changing the patient while an unsaved draft is in
+  progress prompts the doctor to confirm or cancel instead of swapping context
+  underneath them.
+
+Covered by `test/lib/patientSuggestions.test.ts`, `test/api/patientSuggestions.test.ts`,
+`test/components/PatientContextSelector.test.tsx`, and
+`test/components/PlanDraftEditor.context.test.tsx`.
+
 ## Scripts
 
 ```bash

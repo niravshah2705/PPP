@@ -1,0 +1,80 @@
+.patient-selector {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  min-width: 16rem;
+}
+
+.patient-selector__field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.patient-selector__label {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.patient-selector__input {
+  flex: 1;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #b0b7c3;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.patient-selector__suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin: 0.25rem 0 0;
+  padding: 0.25rem;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #b0b7c3;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.patient-selector__suggestion {
+  display: block;
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.patient-selector__suggestion:hover,
+.patient-selector__suggestion:focus {
+  background: #eef2ff;
+}
+
+.patient-selector__prompt {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin-top: 0.25rem;
+  padding: 0.75rem;
+  background: #fff;
+  border: 1px solid #d1495b;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.patient-selector__prompt-text {
+  margin: 0 0 0.5rem;
+}
+
+.patient-selector__prompt-actions {
+  display: flex;
+  gap: 0.5rem;
+}
