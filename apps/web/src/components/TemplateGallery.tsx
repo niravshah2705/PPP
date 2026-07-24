@@ -14,6 +14,10 @@ export interface TemplateGalleryProps {
   onUse?: (draft: PlanDraft) => void;
   /** Invoked with the template to edit. */
   onEdit?: (template: Template) => void;
+  /** Invoked with the template id to preview (loads its expanded items). */
+  onPreview?: (id: string) => void;
+  /** Id of the currently previewed template, highlighted in the gallery. */
+  selectedId?: string;
 }
 
 /**
@@ -22,7 +26,14 @@ export interface TemplateGalleryProps {
  * instantiates a fresh, editable plan draft via the template-to-draft flow,
  * bound to the current patient when one is set.
  */
-export function TemplateGallery({ templates, currentPatientName, onUse, onEdit }: TemplateGalleryProps) {
+export function TemplateGallery({
+  templates,
+  currentPatientName,
+  onUse,
+  onEdit,
+  onPreview,
+  selectedId,
+}: TemplateGalleryProps) {
   if (templates.length === 0) {
     return (
       <p className="template-gallery__empty" data-testid="template-gallery-empty">
@@ -34,7 +45,16 @@ export function TemplateGallery({ templates, currentPatientName, onUse, onEdit }
   return (
     <ul className="template-gallery" data-testid="template-gallery">
       {templates.map((template) => (
-        <li key={template.id} className="template-gallery__card" data-testid={`template-card-${template.id}`}>
+        <li
+          key={template.id}
+          className={
+            template.id === selectedId
+              ? 'template-gallery__card template-gallery__card--selected'
+              : 'template-gallery__card'
+          }
+          data-testid={`template-card-${template.id}`}
+          data-selected={template.id === selectedId ? 'true' : undefined}
+        >
           <h3 className="template-gallery__name">{template.name}</h3>
           {template.description && (
             <p className="template-gallery__desc">{template.description}</p>
@@ -50,6 +70,14 @@ export function TemplateGallery({ templates, currentPatientName, onUse, onEdit }
             {template.items.length} exercise{template.items.length === 1 ? '' : 's'}
           </p>
           <div className="template-gallery__actions">
+            <button
+              type="button"
+              data-testid={`template-preview-${template.id}`}
+              aria-pressed={template.id === selectedId}
+              onClick={() => onPreview?.(template.id)}
+            >
+              Preview
+            </button>
             <button
               type="button"
               data-testid={`template-use-${template.id}`}

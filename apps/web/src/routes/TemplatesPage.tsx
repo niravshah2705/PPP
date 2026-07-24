@@ -4,6 +4,7 @@ import { listTemplates } from '../api/templates';
 import { mergePlanDrafts } from '../lib/planDraft';
 import { TemplateEditor } from '../components/TemplateEditor';
 import { TemplateGallery } from '../components/TemplateGallery';
+import { TemplatePreviewPanel } from '../components/TemplatePreviewPanel';
 import { PlanDraftEditor } from '../components/PlanDraftEditor';
 import { usePatientContextOptional } from '../context/PatientContext';
 
@@ -31,6 +32,9 @@ export function TemplatesPage() {
   // field only when this page is used without the shared context (e.g. tests).
   const [localPatient, setLocalPatient] = useState('');
   const currentPatient = patientCtx ? patientCtx.patient : localPatient;
+  // Template currently expanded in the preview panel (drives the doctor's choice
+  // before instantiating). Cleared if it disappears after a gallery refresh.
+  const [selectedId, setSelectedId] = useState<string | undefined>();
   const [draft, setDraft] = useState<PlanDraft | undefined>();
   // Incoming draft awaiting a replace/merge/cancel decision when one is already
   // in progress and unsaved.
@@ -90,6 +94,14 @@ export function TemplatesPage() {
     return () => controller.abort();
   }, [refresh]);
 
+  // Drop the preview selection if that template is no longer in the list (e.g.
+  // after a refresh removed it) so the panel never points at a stale id.
+  useEffect(() => {
+    if (selectedId && !templates.some((t) => t.id === selectedId)) {
+      setSelectedId(undefined);
+    }
+  }, [templates, selectedId]);
+
   const handleSaved = async (saved: Template) => {
     await refresh();
     setMode({ kind: 'gallery' });
@@ -119,9 +131,12 @@ export function TemplatesPage() {
         <>
           {status === 'loading' && <p data-testid="templates-loading">Loading templates…</p>}
           {status === 'error' && (
-            <p role="alert" data-testid="templates-error">
-              Failed to load templates.
-            </p>
+            <div role="alert" data-testid="templates-error" className="templates-page__error">
+              <span>Failed to load templates.</span>
+              <button type="button" data-testid="templates-retry" onClick={() => void refresh()}>
+                Retry
+              </button>
+            </div>
           )}
           {status === 'ready' && (
             <>
@@ -144,12 +159,21 @@ export function TemplatesPage() {
                   />
                 </label>
               )}
-              <TemplateGallery
-                templates={templates}
-                currentPatientName={currentPatient}
-                onUse={handleUse}
-                onEdit={(template) => setMode({ kind: 'edit', template })}
-              />
+              <div className="templates-page__browse">
+                <TemplateGallery
+                  templates={templates}
+                  currentPatientName={currentPatient}
+                  onUse={handleUse}
+                  onEdit={(template) => setMode({ kind: 'edit', template })}
+                  onPreview={setSelectedId}
+                  selectedId={selectedId}
+                />
+                {templates.length > 0 && (
+                  <div className="templates-page__preview">
+                    <TemplatePreviewPanel templateId={selectedId} />
+                  </div>
+                )}
+              </div>
             </>
           )}
 

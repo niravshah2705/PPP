@@ -16,6 +16,11 @@
   gap: 8px;
 }
 
+.template-gallery__card--selected {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 1px #4f46e5;
+}
+
 .template-gallery__name {
   margin: 0;
   font-size: 16px;

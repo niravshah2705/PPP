@@ -37,6 +37,53 @@ export interface Template {
 }
 
 /**
+ * An exercise reference resolved server-side when a template is expanded for the
+ * preview panel. Carries only what the preview needs: the display name and a
+ * thumbnail/demo-media reference so the doctor can recognise each movement.
+ */
+export interface TemplatePreviewExercise {
+  id: string;
+  name: string;
+  /** Small preview image URL, when the exercise has one. */
+  thumbnailUrl?: string;
+  /**
+   * Reference to the exercise's demo media clip. Used as a fallback thumbnail
+   * source when no dedicated `thumbnailUrl` is set.
+   */
+  demoMediaRef?: string;
+}
+
+/**
+ * A template item expanded with its resolved exercise, as returned by
+ * `GET /api/templates/:id`. Extends the stored {@link TemplateItem} (dosage) with
+ * the exercise details needed to render the preview panel.
+ */
+export interface TemplatePreviewItem extends TemplateItem {
+  exercise: TemplatePreviewExercise;
+}
+
+/**
+ * A template whose items have been expanded for the preview panel
+ * (`GET /api/templates/:id`).
+ *
+ * `itemCount` is the number of items *declared* on the template, before any
+ * items referencing a now-missing exercise are filtered out. Items whose
+ * exercise no longer resolves are omitted from {@link items}; the difference
+ * (`itemCount - items.length`) is surfaced as a subtle "N item unavailable"
+ * note so the doctor sees the remaining exercises instead of a hard failure.
+ */
+export interface TemplateDetail {
+  id: string;
+  name: string;
+  description?: string;
+  categoryTags: string[];
+  /** Total items declared on the template, before filtering missing exercises. */
+  itemCount: number;
+  /** Resolved items; items whose exercise was filtered out are omitted. */
+  items: TemplatePreviewItem[];
+}
+
+/**
  * The editable form of a template while a doctor is creating or editing it.
  * `id` is present when editing an existing template, absent when creating.
  */

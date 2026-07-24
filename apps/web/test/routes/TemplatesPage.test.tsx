@@ -150,3 +150,96 @@ describe('TemplatesPage — instantiate plan from template', () => {
     expect(screen.getByTestId('instantiated-draft')).toHaveTextContent('Knee rehab');
   });
 });
+
+/** Expanded detail for t1, with one item filtered out (declared 2, resolved 1). */
+const t1Detail = {
+  id: 't1',
+  name: 'Knee rehab',
+  description: 'Post-op knee protocol',
+  categoryTags: ['knee'],
+  itemCount: 2,
+  items: [
+    {
+      exerciseId: 'knee-1',
+      sets: 3,
+      reps: 10,
+      hold: 5,
+      rest: 30,
+      exercise: { id: 'knee-1', name: 'Knee Flexion', thumbnailUrl: '/thumbs/knee-1.png' },
+    },
+  ],
+};
+
+describe('TemplatesPage — gallery listing + preview', () => {
+  it('lists every seeded template with its item count and category tags', async () => {
+    await renderReady();
+    const card = screen.getByTestId('template-card-t1');
+    expect(card).toHaveTextContent('Knee rehab');
+    expect(card).toHaveTextContent('knee');
+    expect(card).toHaveTextContent('2 exercises');
+    expect(screen.getByTestId('template-card-t2')).toHaveTextContent('1 exercise');
+  });
+
+  it('starts with an idle preview and no detail fetch until a template is selected', async () => {
+    const fn = stubApi();
+    render(<TemplatesPage />);
+    await screen.findByTestId('template-card-t1');
+    expect(screen.getByTestId('template-preview-idle')).toBeInTheDocument();
+    expect(fn).not.toHaveBeenCalledWith('/api/templates/t1', expect.anything());
+  });
+
+  it('selecting a template shows its exercises with defaults and thumbnails', async () => {
+    const user = userEvent.setup();
+    const fn = vi.fn((url: string) => {
+      if (url === '/api/templates/t1') {
+        return Promise.resolve(new Response(JSON.stringify(t1Detail), { status: 200 }));
+      }
+      if (url.startsWith('/api/templates')) {
+        return Promise.resolve(new Response(JSON.stringify(templates), { status: 200 }));
+      }
+      if (url.startsWith('/api/exercises')) {
+        return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }));
+      }
+      return Promise.reject(new Error(`unexpected url ${url}`));
+    });
+    vi.stubGlobal('fetch', fn);
+
+    render(<TemplatesPage />);
+    await screen.findByTestId('template-card-t1');
+
+    await user.click(screen.getByTestId('template-preview-t1'));
+
+    const item = await screen.findByTestId('template-preview-item-knee-1');
+    expect(item).toHaveTextContent('Knee Flexion');
+    expect(screen.getByTestId('template-preview-dosage-knee-1')).toHaveTextContent('3 × 10 · hold 5s');
+    const thumb = screen.getByTestId('template-preview-thumb-knee-1') as HTMLImageElement;
+    expect(thumb.getAttribute('src')).toBe('/thumbs/knee-1.png');
+    // The declared count (2) exceeds resolved (1): the subtle note is shown.
+    expect(screen.getByTestId('template-preview-unavailable')).toHaveTextContent('1 item unavailable');
+  });
+
+  it('recovers a failed list load via the error retry', async () => {
+    const user = userEvent.setup();
+    let listCalls = 0;
+    const fn = vi.fn((url: string) => {
+      if (url.startsWith('/api/templates')) {
+        listCalls += 1;
+        return listCalls === 1
+          ? Promise.resolve(new Response('boom', { status: 500 }))
+          : Promise.resolve(new Response(JSON.stringify(templates), { status: 200 }));
+      }
+      if (url.startsWith('/api/exercises')) {
+        return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }));
+      }
+      return Promise.reject(new Error(`unexpected url ${url}`));
+    });
+    vi.stubGlobal('fetch', fn);
+
+    render(<TemplatesPage />);
+    await screen.findByTestId('templates-error');
+
+    await user.click(screen.getByTestId('templates-retry'));
+
+    expect(await screen.findByTestId('template-card-t1')).toBeInTheDocument();
+  });
+});
