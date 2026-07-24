@@ -1,4 +1,9 @@
-import type { Template, TemplateDraft } from '../types/template';
+import type {
+  Template,
+  TemplateDetail,
+  TemplateDraft,
+  TemplatePreviewItem,
+} from '../types/template';
 import {
   errorsByField,
   validateTemplateDraft,
@@ -94,6 +99,73 @@ export async function listTemplates(signal?: AbortSignal): Promise<Template[]> {
     throw new TemplateLoadError('Malformed templates payload');
   }
   return data.map(assertTemplate);
+}
+
+function assertPreviewItem(data: unknown): TemplatePreviewItem {
+  const item = data as TemplatePreviewItem;
+  if (
+    !item ||
+    typeof item.exerciseId !== 'string' ||
+    !item.exercise ||
+    typeof item.exercise.id !== 'string' ||
+    typeof item.exercise.name !== 'string'
+  ) {
+    throw new TemplateLoadError('Malformed template item payload');
+  }
+  return item;
+}
+
+function assertTemplateDetail(data: unknown): TemplateDetail {
+  const t = data as TemplateDetail;
+  if (
+    !t ||
+    typeof t.id !== 'string' ||
+    typeof t.name !== 'string' ||
+    !Array.isArray(t.categoryTags) ||
+    !Array.isArray(t.items)
+  ) {
+    throw new TemplateLoadError('Malformed template payload');
+  }
+  const items = t.items.map(assertPreviewItem);
+  // `itemCount` is the declared total (before missing-exercise items are filtered
+  // out); tolerate a server that omits it by falling back to the resolved count.
+  const itemCount =
+    typeof t.itemCount === 'number' && t.itemCount >= items.length ? t.itemCount : items.length;
+  return { ...t, items, itemCount };
+}
+
+/**
+ * Fetch a single template expanded for the preview panel via
+ * `GET /api/templates/:id`. The server resolves each item's exercise (name +
+ * thumbnail/demo media) and filters out items whose exercise no longer exists,
+ * reporting the declared total via `itemCount` so the UI can note how many were
+ * unavailable.
+ *
+ * - 404 -> {@link TemplateNotFoundError} (caller renders an inline error).
+ * - other non-2xx / network failure -> {@link TemplateLoadError}.
+ */
+export async function getTemplate(id: string, signal?: AbortSignal): Promise<TemplateDetail> {
+  const encoded = encodeURIComponent(id);
+  let response: Response;
+  try {
+    response = await fetch(`/api/templates/${encoded}`, {
+      headers: { Accept: 'application/json' },
+      signal,
+    });
+  } catch (err) {
+    throw new TemplateLoadError(
+      err instanceof Error ? err.message : 'Network error while loading template',
+    );
+  }
+
+  if (response.status === 404) {
+    throw new TemplateNotFoundError(id);
+  }
+  if (!response.ok) {
+    throw new TemplateLoadError(`Failed to load template (HTTP ${response.status})`);
+  }
+
+  return assertTemplateDetail(await response.json());
 }
 
 async function sendTemplate(

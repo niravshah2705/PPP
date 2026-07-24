@@ -6,6 +6,7 @@ import {
   TemplateValidationError,
   createTemplate,
   deleteExercise,
+  getTemplate,
   listTemplates,
   updateTemplate,
 } from '../../src/api/templates';
@@ -53,6 +54,76 @@ describe('listTemplates', () => {
   it('throws TemplateLoadError on a server error', async () => {
     mockFetch(() => new Response('boom', { status: 500 }));
     await expect(listTemplates()).rejects.toBeInstanceOf(TemplateLoadError);
+  });
+});
+
+describe('getTemplate', () => {
+  const detail = {
+    id: 't1',
+    name: 'Knee rehab',
+    description: 'Post-op knee protocol',
+    categoryTags: ['knee'],
+    itemCount: 2,
+    items: [
+      {
+        exerciseId: 'knee-1',
+        sets: 3,
+        reps: 10,
+        hold: 5,
+        rest: 30,
+        exercise: { id: 'knee-1', name: 'Knee Flexion', thumbnailUrl: '/thumbs/knee-1.png' },
+      },
+    ],
+  };
+
+  it('GETs /api/templates/:id and returns the expanded template', async () => {
+    const fn = mockFetch(() => new Response(JSON.stringify(detail), { status: 200 }));
+    const result = await getTemplate('t1');
+    expect(fn).toHaveBeenCalledWith('/api/templates/t1', expect.anything());
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].exercise.name).toBe('Knee Flexion');
+    // Declared count is preserved so the caller can note filtered-out items.
+    expect(result.itemCount).toBe(2);
+  });
+
+  it('encodes the id in the request path', async () => {
+    const fn = mockFetch(
+      () => new Response(JSON.stringify({ ...detail, id: 'a/b' }), { status: 200 }),
+    );
+    await getTemplate('a/b');
+    expect(fn).toHaveBeenCalledWith('/api/templates/a%2Fb', expect.anything());
+  });
+
+  it('falls back to the resolved count when itemCount is omitted', async () => {
+    const { itemCount: _omit, ...withoutCount } = detail;
+    void _omit;
+    mockFetch(() => new Response(JSON.stringify(withoutCount), { status: 200 }));
+    const result = await getTemplate('t1');
+    expect(result.itemCount).toBe(result.items.length);
+  });
+
+  it('throws TemplateNotFoundError on 404', async () => {
+    mockFetch(() => new Response('nope', { status: 404 }));
+    await expect(getTemplate('missing')).rejects.toBeInstanceOf(TemplateNotFoundError);
+  });
+
+  it('throws TemplateLoadError on a server error', async () => {
+    mockFetch(() => new Response('boom', { status: 500 }));
+    await expect(getTemplate('t1')).rejects.toBeInstanceOf(TemplateLoadError);
+  });
+
+  it('throws TemplateLoadError when an item is missing its resolved exercise', async () => {
+    mockFetch(
+      () =>
+        new Response(
+          JSON.stringify({
+            ...detail,
+            items: [{ exerciseId: 'knee-1', sets: 3, reps: 10, hold: 5, rest: 30 }],
+          }),
+          { status: 200 },
+        ),
+    );
+    await expect(getTemplate('t1')).rejects.toBeInstanceOf(TemplateLoadError);
   });
 });
 
