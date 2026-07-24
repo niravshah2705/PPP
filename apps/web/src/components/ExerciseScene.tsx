@@ -1,8 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Exercise } from '../types/exercise';
 import { createDemoScene, type DemoSceneHandle } from '../scene/demoScene';
 import { useWebXRSupport } from '../hooks/useWebXRSupport';
 import './ExerciseScene.css';
+
+type VrEntry = 'idle' | 'entering' | 'error';
 
 export interface ExerciseSceneProps {
   exercise: Exercise;
@@ -27,6 +29,8 @@ export interface ExerciseSceneProps {
  */
 export function ExerciseScene({ exercise, demoOnly = false }: ExerciseSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const handleRef = useRef<DemoSceneHandle | undefined>(undefined);
+  const [vrEntry, setVrEntry] = useState<VrEntry>('idle');
   // The embed never offers immersive VR, so skip the probe there.
   const webXR = useWebXRSupport(!demoOnly);
 
@@ -40,17 +44,34 @@ export function ExerciseScene({ exercise, demoOnly = false }: ExerciseSceneProps
         accentColor: exercise.accentColor,
         demoClip: exercise.demoClip,
       });
+      handleRef.current = handle;
     } catch (err) {
       // A missing WebGL context should not blank the page; leave the canvas
       // element in place and surface the failure to diagnostics only.
       console.error('Failed to initialise demo scene', err);
     }
 
+    // A fresh scene per exercise starts from a clean Enter-VR state.
+    setVrEntry('idle');
+
     return () => {
       // Release WebGL resources on unmount (or exercise change).
       handle?.dispose();
+      handleRef.current = undefined;
     };
   }, [exercise.id, exercise.accentColor, exercise.demoClip]);
+
+  const handleEnterVR = useCallback(async () => {
+    const handle = handleRef.current;
+    if (!handle) {
+      setVrEntry('error');
+      return;
+    }
+    setVrEntry('entering');
+    // enterVR never rejects, but guard anyway so a click can never crash the UI.
+    const result = await handle.enterVR().catch(() => ({ status: 'rejected' as const }));
+    setVrEntry(result.status === 'started' ? 'idle' : 'error');
+  }, []);
 
   return (
     <div
@@ -72,13 +93,23 @@ export function ExerciseScene({ exercise, demoOnly = false }: ExerciseSceneProps
             {exercise.description && <p>{exercise.description}</p>}
           </header>
           {webXR === 'supported' && (
-            <button
-              type="button"
-              className="exercise-scene__enter-vr"
-              data-testid="enter-vr-button"
-            >
-              Enter VR
-            </button>
+            <div className="exercise-scene__vr">
+              <button
+                type="button"
+                className="exercise-scene__enter-vr"
+                data-testid="enter-vr-button"
+                onClick={handleEnterVR}
+                disabled={vrEntry === 'entering'}
+                aria-busy={vrEntry === 'entering'}
+              >
+                {vrEntry === 'entering' ? 'Starting VR…' : 'Enter VR'}
+              </button>
+              {vrEntry === 'error' && (
+                <p className="exercise-scene__vr-error" role="alert" data-testid="enter-vr-error">
+                  Couldn’t start the immersive session. The inline 3D demo is still available.
+                </p>
+              )}
+            </div>
           )}
         </div>
       )}
